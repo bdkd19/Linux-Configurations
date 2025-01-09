@@ -1,0 +1,78 @@
+====================   Raid concept in Rhel 9 or any Linux based distro ====================
+
+
+1. Create a partition or attach any min 2 disk which you want to make a raid
+eg. Attach 2-2  5gb disk
+
+
+2. we have create raid 1 
+array name = /dev/md0 
+
+
+# sudo -i
+# mdadm -C /dev/md0 -a yes -l 1 -n 2 /dev/xvdb /dev/xvdc                   <============== Here l is define the raid level which is 0,1,5,6,10 according to the level we can choose the disks 
+
+
+# mkfs.ext4 /dev/md0
+# mkfs.ext4 /dev/md0
+# mkdir /raid1
+# df -TH
+# parted /dev/md0 print
+# mount /dev/md0 /raid1
+# mdadm -D /dev/md0           <=== For read the raid 
+
+
+
+For raid will automatically active after reboot the run commad
+# mdadm --detail --scan >> /etc/mdadm.conf
+
+
+show info of particular drive 
+# mdadm --examine /dev/xvdc
+
+
+
+How we can offline and remove any drive from my running raid array and again. How we can add new disk in the same array.
+
+
+#mdadm /dev/md0 -f /dev/xvdc
+# cat /proc/mdstat
+
+
+# mdadm /dev/md0 -r /dev/xvdb         <=======Disk is removed which is faulty
+# cat /proc/mdstat
+# mdadm /dev/md0 -a /dev/xvdb      <======= New disk is active
+
+
+
+Now check the status 
+
+
+# cat /proc/mdstat
+Personalities : [raid1]
+md0 : active raid1 xvdb[2] xvdc[1]
+5237760 blocks super 1.2 [2/1] [_U]
+[==========>..........] recovery = 50.0% (2621888/5237760) finish=0.3min speed=137994K/sec
+
+
+
+
+
+Now how to remove the raid on the machine
+#  umount /raid1/
+
+
+
+If you want to stop the raid
+# mdadm --stop /dev/md0
+
+
+And start the raid again 
+# mdadm --assemble /dev/md0
+
+
+=> Same configurations will be happen on the raid 5, raid 6 and raid 10 as well but make sure take the disk accordingly.
+for raid 5 = 3 disks
+raid 6 = 4disks
+raid 10= 4 disks
+
