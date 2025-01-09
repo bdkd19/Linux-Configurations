@@ -1,0 +1,174 @@
+# PXE Boot with Kickstart using HTTP
+
+## Introduction
+PXE (Preboot Execution Environment) enables network-based booting of systems, often used for automating OS deployments. 
+Kickstart is a method to automate Red Hat Enterprise Linux (RHEL) installations. This document details how to set up PXE boot 
+with Kickstart using an HTTP server.
+
+---
+
+## Prerequisites
+1. **RHEL 9 system** acting as the PXE server.
+2. A client system for testing PXE boot.
+3. VMware Fusion setup with network configurations allowing PXE boot.
+4. DHCP server for IP address allocation.
+5. HTTP server (e.g., Apache) installed and running.
+6. RHEL 9 ISO image.
+7. Root or sudo privileges on the PXE server.
+
+---
+
+## Step 1: Configure the HTTP Server
+1. Install the Apache HTTP server:
+   ```bash
+   sudo dnf install httpd -y
+   ```
+
+2. Start and enable the HTTP server:
+   ```bash
+   sudo systemctl start httpd
+   sudo systemctl enable httpd
+   ```
+
+3. Mount the RHEL 9 ISO image to make its contents accessible:
+   ```bash
+   sudo mkdir -p /var/www/html/rhel9
+   sudo mount -o loop /path/to/rhel9.iso /var/www/html/rhel9
+   ```
+
+4. Verify HTTP server access:
+   Open a browser and navigate to `http://<PXE_server_IP>/rhel9`. You should see the contents of the mounted ISO.
+
+---
+
+## Step 2: Prepare the Kickstart File
+1. Create a Kickstart file, for example, `/var/www/html/ks.cfg`:
+   ```bash
+   sudo nano /var/www/html/ks.cfg
+   ```
+
+2. Example Kickstart configuration:
+   ```plaintext
+   #version=RHEL9
+   install
+   url --url="http://<PXE_server_IP>/rhel9"
+   lang en_US.UTF-8
+   keyboard us
+   timezone America/New_York --isUtc
+   rootpw --plaintext password123
+   reboot
+   
+   bootloader --location=mbr
+   clearpart --all --initlabel
+   autopart
+   
+   %packages
+   @^minimal
+   %end
+   ```
+
+3. Ensure the Kickstart file is accessible:
+   ```bash
+   sudo chmod 644 /var/www/html/ks.cfg
+   ```
+
+---
+
+## Step 3: Configure the TFTP Server
+1. Install the TFTP server:
+   ```bash
+   sudo dnf install tftp-server syslinux -y
+   ```
+
+2. Start and enable the TFTP service:
+   ```bash
+   sudo systemctl start tftp.socket
+   sudo systemctl enable tftp.socket
+   ```
+
+3. Copy the necessary bootloader files:
+   ```bash
+   sudo cp /usr/share/syslinux/pxelinux.0 /var/lib/tftpboot/
+   sudo cp /usr/share/syslinux/menu.c32 /usr/share/syslinux/memdisk /usr/share/syslinux/mboot.c32 /usr/share/syslinux/chain.c32
+   /var/lib/tftpboot/
+   ```
+
+4. Create the directory for PXE configuration files:
+   ```bash
+   sudo mkdir -p /var/lib/tftpboot/pxelinux.cfg
+   ```
+
+5. Create the PXE configuration file:
+   ```bash
+   sudo nano /var/lib/tftpboot/pxelinux.cfg/default
+   ```
+
+6. Example PXE configuration:
+   ```plaintext
+   DEFAULT menu.c32
+   PROMPT 0
+   TIMEOUT 50
+   MENU TITLE PXE Boot Menu
+
+   LABEL RHEL9 Kickstart
+       KERNEL vmlinuz
+       APPEND initrd=initrd.img inst.ks=http://<PXE_server_IP>/ks.cfg
+   ```
+
+7. Copy kernel and initrd images from the ISO to the TFTP directory:
+   ```bash
+   sudo cp /var/www/html/rhel9/images/pxeboot/vmlinuz /var/lib/tftpboot/
+   sudo cp /var/www/html/rhel9/images/pxeboot/initrd.img /var/lib/tftpboot/
+   ```
+
+---
+
+## Step 4: Configure the DHCP Server
+1. Install the DHCP server:
+   ```bash
+   sudo dnf install dhcp-server -y
+   ```
+
+2. Configure the DHCP server:
+   ```bash
+   sudo nano /etc/dhcp/dhcpd.conf
+   ```
+
+3. Example DHCP configuration:
+   ```plaintext
+   subnet 192.168.1.0 netmask 255.255.255.0 {
+       range 192.168.1.100 192.168.1.200;
+       option routers 192.168.1.1;
+       option domain-name-servers 8.8.8.8;
+       filename "pxelinux.0";
+       next-server <PXE_server_IP>;
+   }
+   ```
+
+4. Start and enable the DHCP server:
+   ```bash
+   sudo systemctl start dhcpd
+   sudo systemctl enable dhcpd
+   ```
+
+---
+
+## Step 5: Test the PXE Boot
+1. Configure the client system to boot from the network.
+2. Power on the client system.
+3. The PXE boot menu should appear, allowing you to select the RHEL 9 Kickstart installation.
+4. The installation process should begin, using the settings in the Kickstart file.
+
+---
+
+## Troubleshooting
+- Verify network connectivity between the PXE server and client.
+- Check the TFTP server logs for errors: `/var/log/messages`.
+- Ensure the HTTP server is accessible from the client.
+- Confirm the DHCP server is assigning IP addresses correctly.
+
+---
+
+## Conclusion
+This guide has shown how to configure a PXE server to deploy RHEL 9 using Kickstart and HTTP.
+Automating installations in this way can significantly streamline the deployment process in networked environments.

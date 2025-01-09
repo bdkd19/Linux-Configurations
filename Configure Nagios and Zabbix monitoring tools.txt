@@ -1,0 +1,116 @@
+=====================Nagios Configuration=====================
+Nagios is an open-source monitoring software that allows system administrators to monitor the health and performance of servers, 
+applications, and network devices. Nagios provides a comprehensive solution for monitoring the IT infrastructure and can alert 
+administrators of potential problems before they become critical.
+
+Nagios is an open-source monitoring system designed for monitoring and alerting on the status of systems, networks, and infrastructure 
+in IT environments. It helps administrators keep track of the health of various services, servers, and devices by performing checks 
+and providing alerts for any issues like outages or performance degradation. Nagios offers a flexible architecture, allowing users to 
+define their monitoring criteria and alerts through plugins, and it provides a web interface for visualization and reporting.
+
+Step 1: Install Required Dependencies
+
+Before we install Nagios, we need to install a few dependencies: Apache web server, PHP, and GCC. You can install these
+by running the following command:
+
+# yum groupinstall "development tools" 
+# yum install httpd php php-cli gcc unzip wget glibc glibc-common gd gd-devel net-snmp 
+
+Step 2: Create a Nagios User and Group
+
+Nagios requires a user and group to run its processes. To create these, run the following commands:
+
+# useradd nagios 
+# groupadd nagcmd 
+# usermod -a -G nagcmd nagios 
+# usermod -a -G nagcmd apache 
+
+Step 3: Download Nagios Core
+To download Nagios Core, we will use the wget command to download the latest version of Nagios Core from the official website.
+At the time of writing, the latest version is 4.4.5. Run the following command to download it:
+
+# wget https://assets.nagios.com/downloads/nagioscore/releases/nagios-4.4.10.tar.gz 
+
+Once the archive has been downloaded, we can extract it using the following command:
+
+# tar -xzf nagios-4.4.10.tar.gz 
+
+Step 4: Compile Nagios Core
+To compile Nagios Core, navigate to the extracted directory using the following command:
+
+# cd nagios-4.4.10 
+
+Step 4: Compile Nagios Core
+To compile Nagios Core, navigate to the extracted directory using the following command:
+
+# cd nagios-4.4.10 
+
+Next, run the following command to compile Nagios Core:
+
+# ./configure --with-command-group=nagios 
+# make all 
+
+Step 5: Install Nagios Core
+Once the compilation is complete, we can install Nagios Core by running the following commands:
+
+# sudo make install 
+# sudo make install-commandmode 
+# sudo make install-init 
+# sudo make install-config 
+# sudo make install-webconf 
+
+Step 6: Install Nagios Plugins
+
+Nagios Plugins are required to extend the functionality of Nagios Core. After installing and configuring core service, 
+Download latest nagios-plugins source and install using the following commands.
+
+wget http://nagios-plugins.org/download/nagios-plugins-2.4.3.tar.gz 
+# tar xzf nagios-plugins-2.4.3.tar.gz 
+# cd nagios-plugins-2.4.3 
+
+Now compile and install nagios plugins
+
+./configure --with-nagios-user=nagios --with-nagios-group=nagcmd 
+# sudo make 
+# sudo make install 
+
+Step 7: Configure Nagios
+To configure Nagios, we need to edit the Nagios configuration file. To do this, run the following command:
+
+# vim /usr/local/nagios/etc/nagios.cfg 
+In the configuration file, check for the following line, add them if not available:
+
+# You can specify individual object config files as shown below:
+cfg_file=/usr/local/nagios/etc/objects/commands.cfg
+cfg_file=/usr/local/nagios/etc/objects/contacts.cfg
+cfg_file=/usr/local/nagios/etc/objects/timeperiods.cfg
+cfg_file=/usr/local/nagios/etc/objects/templates.cfg
+
+Save and close the file.
+
+Step 8: Set up Authentication
+
+By default, Nagios requires authentication to access the web interface. To set up authentication, 
+run the following command to create an admin user:
+
+# htpasswd -c /usr/local/nagios/etc/htpasswd.users nagiosadmin 
+
+Step 9: Verify and Start Services
+First, verify the Nagios configuration file using the following command.
+
+/usr/local/nagios/bin/nagios -v /usr/local/nagios/etc/nagios.cfg 
+
+If there is no error found, run the following command to enable and start Nagios service:
+
+# systemctl enable nagios 
+# systemctl start nagios 
+
+Next, start the Apache web server using the following command:
+# systemctl start httpd 
+
+Step 10: Access the Nagios Web Interface
+
+Finally, you can access the Nagios web interface by navigating to http://your-server-ip-hostname/nagios in your web browser. 
+You will be prompted to enter the username and password you created in step 8.
+
+

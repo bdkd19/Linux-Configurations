@@ -1,0 +1,65 @@
+Install Multiple Linux Distributions Using PXE Network Boot on RHEL/Rhel 9 
+
+Install and Configure DNSMASQ Server
+
+dnf install dnsmasq -y
+mv /etc/dnsmasq.conf /etc/dnsmasq.conf.backup
+vim /etc/dnsmasq.conf
+
+interface enp0s3, lo 
+#bind-interfaces
+domain=shreelinux
+#DHCP range-leases
+dhcp-range enp0s3,192.168.21.200, 192.168.21.253,255.255.255.0,1h
+# PXE
+dhcp-boot-pxelinux.0, pxeserver, 192.168.21.2
+# Gateway
+dhcp-option-3,192.168.21.1
+# DNS
+dhcp-option=6,192.168.21.2
+server-192.168.21.2
+#Broadcast Address
+dhcp-option-28, 192.168.21.255
+# NTP Server
+dhcp-option=42,0.0.0.0
+pxe-prompt="Press F8 for menu.", 60
+pxe-service-x86PC, "Install RHEL 9 from Network Server", pxelinux
+enable-tftp
+tftp-root=/var/lib/tftpboot
+
+Install SYSLINUX Bootloaders
+dnf install syslinux -y
+ls /usr/share/syslinux
+
+Install TFTP-Server and Copy it with SYSLINUX Bootloaders
+dnf install tftp-server -y
+cp -r /usr/share/syslinux/* /var/lib/tftpboot
+
+Setup PXE Server Configuration File
+
+mkdir /var/lib/tftpboot/pxelinux.cfg
+touch /var/lib/tftpboot/pxelinux.cfg/default
+vim /var/lib/tftpboot/pxelinux.cfg/default
+default menu.c32 prompt 0
+timeout 300
+ONTIMEOUT local
+menu title ### PXE Boot Menu ###
+
+label 1
+menu label ^1) Install Rhel 9 x64 with Local Repo
+kernel rhel9/vmlinuz
+append initrd=rhel9/initrd.img inst.repo-ftp://192.168.21.130/pub/ devfs=nomount
+label 2
+menu label ^2) Install Rhel 9 x64 with http
+kernel rhel9/vmlinuz
+append initrd=rhel9/initrd.img inst.repo=http://192.168.21.130/ ip=dhcp
+label 3
+menu label ^3) Install Rhel 8 x64 With HTTP
+kernel rhel8/vmlinuz
+append initrd=rhel8/initrd.img ip=dhcp inst.repo=http://192.168.21.130/
+label 4
+menu label ^4) Boot from local drive
+I
+dd Rhel 9 Boot Images to PXE Server
+mkdir /var/lib/tftpboot/rhel9
+# cp /mnt/images/pxeboot/vmlinuz /var/lib/tftpboot/rhel9

@@ -1,0 +1,137 @@
+============================ Configuration of LAMP server ===============================
+Intro => A LAMP stack is a collection of four different software (Linux, Apache, MySQL, and PHP) that programmers or web 
+developers use to create and deploy websites or applications.
+
+Step 1: Install Apache Web Server
+1. After performing a minimal system installation and configuring your server network interface with a Static IP Address, 
+go ahead and install Apache (httpd) service binary package provided from official repositories using the following yum command.
+
+# yum install httpd
+
+2. After finishing the Apache installation, use the following commands to manage Apache daemon since RHEL and CentOS both migrated 
+their init scripts from SysV to Systemd –
+
+# systemctl start httpd
+# systemctl enable httpd
+# systemctl status httpd
+
+3. On the next step, make sure to allow access to Apache by opening ports 80 and 443 on Firewall using firewall-cmd, which is the default
+ command to manage Firewalld through daemon.
+
+# firewall-cmd --permanent --add-service=http
+# firewall-cmd --permanent --add-service=https
+# systemctl restart firewalld
+
+Some important Firewalld commands to manage the firewall as presented below:
+
+# firewall-cmd --state
+# firewall-cmd --list-all
+# firewall-cmd --list-interfaces
+# firewall-cmd --get-service
+# firewall-cmd --query-service service_name
+# firewall-cmd --add-port=80/tcp
+
+4. To verify Apache functionality open a remote browser and type your server IP Address using HTTP protocol on the URL,
+and a default page should appear like in the screenshot below.
+
+http://server_IP
+
+5. For now, the Apache DocumentRoot path it’s set to /var/www/html system path, which by default doesn’t provide any index file. 
+If you want to see a directory list of your DocumentRoot path.
+Open the Apache welcome configuration file and set the Indexes statement from – to + on LocationMatch directive, 
+using the below screenshot as an example.
+# vi /etc/httpd/conf.d/welcome.conf
+
+6. After making changes, close the file, restart the Apache service to reflect changes, and reload your browser page to see the final result.
+# systemctl restart httpd
+
+Step 2: Install PHP Support for Apache
+
+7. Before installing PHP dynamic language support for Apache, get a full list of available PHP modules and extensions using the following command.
+# yum search php
+
+8. Depending on what type of applications you want to use, install the required PHP modules from the above list, but for a basic MySQL/MariaDB 
+support in PHP and PhpMyAdmin you need to install the following modules.
+
+# yum install php php-mysql php-pdo php-gd php-mbstring
+
+9. To get a full information list on PHP from your browser, create an info.php file on Apache Document Root using the following command, 
+restart the httpd service, and direct your browser to the http://server_IP/info.php address.
+# echo "<?php phpinfo(); ?>" > /var/www/html/info.php
+# systemctl restart httpd
+
+10. If you get an error on PHP Date and Timezone, open the php.ini configuration file, search, and uncomment date.timezone statement, 
+append your physical location, and restart the Apache daemon.
+
+# vi /etc/php.ini
+
+Locate and change date.timezone line to look like this, using PHP Supported Timezones list.
+
+date.timezone = Continent/City
+
+Step 3: Install and Configure MariaDB Database
+
+11. The RHEL distribution switched from MySQL to MariaDB for its default database management system.
+ To install the MariaDB database use the following command.
+ 
+ # yum install mariadb-server mariadb
+ 
+12. After the MariaDB package is installed, start the database daemon and use the mysql_secure_installation script to secure the database
+(set a root password, disable remote login from the root, remove the test database, and remove anonymous users). 
+ 
+# systemctl start mariadb
+# systemctl enable mariadb
+# systemctl status mariadb
+# mysql_secure_installation
+
+13. To test database functionality login to MariaDB using its root account and exit using a quit statement.
+
+mysql -u root -p
+MariaDB > show databases;
+MariaDB > quit
+
+Step 4: Install PhpMyAdmin to Manage MySQL
+
+14. By default official repositories don’t provide any binary package for PhpMyAdmin Web Interface. 
+If you are uncomfortable using the MySQL command line to manage your database you can install the PhpMyAdmin 
+package by enabling the remi repository using the following command.
+
+# yum install -y https://rpms.remirepo.net/enterprise/remi-release-9.rpm  [On CentOS/RHEL 8]
+# yum install -y https://rpms.remirepo.net/enterprise/remi-release-8.rpm  [On CentOS/RHEL 8]
+# yum install -y https://rpms.remirepo.net/enterprise/remi-release-7.rpm  [On CentOS/RHEL 7]
+After enabling the remi repository, next install PhpMyAdmin.
+
+# yum install phpmyadmin
+
+15. Next configure PhpMyAdmin to allow connections from remote hosts by editing phpmyadmin.conf file, located on the Apache conf.d directory, commenting on the following lines.
+
+# vi /etc/httpd/conf.d/phpMyAdmin.conf
+Add the “Require all granted” line under the “Require local” line as shown.
+
+<Directory /usr/share/phpMyAdmin/>
+   AddDefaultCharset UTF-8
+   Require local
+   Require all granted
+</Directory>
+
+16. To be able to log in to the PhpMyAdmin Web interface, restart the Apache Web service and direct your browser to the URL address.
+
+# systemctl restart httpd
+
+http://server_IP/phpmyadmin/
+
+Step 5: Enable LAMP System-Wide in Linux
+17. If you need MariaDB and Apache services to be automatically started after reboot issue the following commands to enable them system-wide.
+
+# systemctl enable mariadb
+# systemctl enable httpd
+
+That’s all it takes for a basic LAMP installation on RHEL-based distributions. The next series of articles related to the LAMP 
+stack will discuss how to create Virtual Hosts, generate SSL Certificates and Keys, and add SSL transaction support for Apache HTTP Server.
+
+
+ 
+ 
+ 
+ 
+ 

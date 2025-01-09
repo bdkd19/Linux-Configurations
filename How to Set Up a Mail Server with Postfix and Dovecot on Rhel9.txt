@@ -1,0 +1,264 @@
+--------------------- How to Set Up a Mail Server with Postfix and Dovecot on RHEL-9/CentOS-9/Rockey Linux -------------------------
+Configuration link: https://reintech.io/blog/setup-mail-server-postfix-dovecot-centos9
+
+What is Postfix and Dovecot
+
+Postfix:
+
+Mail Transfer Agent (MTA) that handles email routing and delivery.
+
+Dovecot:
+
+IMAP/POP3 email server that manages email mailboxes and user access.
+Together, Postfix and Dovecot provide a complete email server solution, with Postfix responsible for sending/receiving emails, and Dovecot 
+managing the email storage and user access.
+
+Postfix (SMTP):
+
+Postfix, as the Mail Transfer Agent, primarily uses port 25 for the standard SMTP (Simple Mail Transfer Protocol) communication.
+It can also use port 587 for submissions, which is the recommended port for submitting emails from email clients.
+Additionally, Postfix may use port 465 for secure SMTP connections (SMTP over SSL/TLS).
+
+Dovecot (IMAP/POP3):
+
+Dovecot, as the IMAP and POP3 server, typically uses the following port numbers:
+IMAP: Port 143 (unencrypted) or Port 993 (IMAP over SSL/TLS)
+POP3: Port 110 (unencrypted) or Port 995 (POP3 over SSL/TLS)
+
+
+
+Step 1: Install Postfix
+
+Postfix is a free and open-source mail transfer agent (MTA) that routes and delivers electronic mail. 
+To install Postfix, run the following command:
+
+# sudo dnf install -y postfix
+
+Once installed, we need to configure Postfix. Open the main configuration file using your preferred text editor:
+
+sudo nano /etc/postfix/main.cf
+
+Modify the following parameters to match your domain:
+
+myhostname = mail.example.com
+mydomain = example.com
+myorigin = $mydomain
+inet_interfaces = all
+mydestination = $myhostname, localhost.$mydomain, localhost, $mydomain
+mynetworks = 127.0.0.0/8
+home_mailbox = Maildir/
+smtpd_banner = $myhostname ESMTP
+
+After configuring main.cf, enable and start Postfix:
+
+sudo systemctl enable postfix
+sudo systemctl start postfix
+
+Step 2: Install Dovecot
+
+Dovecot is an open-source IMAP and POP3 server for Unix-like operating systems. To install Dovecot, execute:
+
+sudo dnf install -y dovecot
+
+Next, configure Dovecot. Open the configuration file:
+
+sudo nano /etc/dovecot/dovecot.conf
+
+
+Add the following lines to enable IMAP and POP3 protocols:
+
+protocols = imap pop3
+
+Then, configure mail location by editing 10-mail.conf:
+
+sudo nano /etc/dovecot/conf.d/10-mail.conf
+
+Set the mail location:
+
+mail_location = maildir:~/Maildir
+
+
+Now configure the authentication process by editing 10-auth.conf:
+
+sudo nano /etc/dovecot/conf.d/10-auth.conf
+
+
+Uncomment and set the following:
+
+disable_plaintext_auth = no
+auth_mechanisms = plain login
+
+
+Finally, start and enable Dovecot:
+
+sudo systemctl enable dovecot
+sudo systemctl start dovecot
+
+Step 3: Configure Firewall
+
+Allow the necessary ports through the firewall:
+
+sudo firewall-cmd --add-service=smtp --permanent
+sudo firewall-cmd --add-service=pop3 --permanent
+sudo firewall-cmd --add-service=imap --permanent
+sudo firewall-cmd --reload
+
+Step 4: Testing the Setup
+
+Verify that Postfix and Dovecot are running correctly. For Postfix, send a test email:
+
+echo "Test email from Postfix" | mail -s "Test Postfix" your-email@example.com
+
+Step 4: Install sendmail
+
+# yum install sendmail -y
+#yum install thunderbird -y    <===== for checking the mails on thunderbird
+
+
+
+--------------------------------------------- OR 2nd option -----------------------------------------
+------------------------------------ Configuring a RHEL 9 Email Server ------------------------------
+Configuration link: https://www.answertopia.com/rhel/setting-up-a-rhel-postfix-email-server/
+
+1. Postfix Pre-Installation Steps
+
+# systemctl status sendmail
+
+# systemctl stop sendmail
+# systemctl disable sendmail
+or 
+# dnf remove sendmail
+
+Firewall/Router Configuration
+
+# firewall-cmd --permanent --add-service=smtp
+
+Installing Postfix on RHEL 9
+
+# dnf install postfix
+The dnf tool will download and install postfix and configure a special postfix user in the /etc/ passwd file.
+
+2. Configuring Postfix
+
+The main configuration settings for postfix are located in the /etc/postfix/main.cf file. Many resources on the 
+internet provide detailed information on postfix, so this section will focus on the basic options required to get email up and running.
+Even though the apt installation set up some basic configuration options, it tends to miss some settings and guess incorrectly for others,
+so carefully review the main.cf file.
+
+The key options in the main.cf file are as follows:
+
+myhostname = mta1.domain.com
+
+mydomain = domain.com
+
+myorigin = $mydomain
+
+mydestination = $myhostname, localhost.$mydomain, localhost, $mydomain
+
+inet_interfaces = $myhostname
+
+mynetworks = subnet
+
+The format of myhostname is host.domain.extension. If, for example, your Linux system is named MyLinuxHost and your 
+internet domain is MyDomain.com you would set the myhostname option as follows: 
+
+myhostname = mylinuxhost.mydomain.com
+
+The mydomain setting is just the domain part of the above setting. For example: 
+
+mydomain = mydomain.com
+myorigin = $mydomain
+inet_interfaces = all
+
+mynetworks = 192.168.0.0/24, 127.0.0.0/8
+mynetworks = subnet
+
+3. Configuring DNS MX Records
+
+Starting Postfix on a RHEL 9 System
+
+Once the /etc/postfix/main.cf file is configured with the correct settings, it is now time to start up postfix. 
+This can be achieved from the command line as follows:
+
+# systemctl start postfix
+
+If postfix was already running, make sure the configuration changes are loaded using the following command:
+
+# systemctl reload postfix
+
+To configure postfix to start automatically at system startup, run the following command:
+
+# systemctl enable postfix
+
+The postfix process should now start up. The best way to verify everything works is to check your mail log.
+This is typically in the /var/log/maillog file and should now contain an entry resembling the following output:
+
+As long as no error messages have been logged, you have successfully installed and started postfix and are ready to test the 
+postfix configuration.
+
+4. -> Testing Postfix
+
+An easy way to test the postfix configuration is to send email messages between local users on the system. 
+To perform a quick test, use the mail tool as follows (where name and mydomain are replaced by the name of a user on
+the system and your domain name, respectively):
+
+# mail name@mydomain.com
+
+When prompted, enter a subject for the email message and then enter the message body text. 
+To send the email message, press Ctrl-D. For example:
+
+# mail demo@mydomain.com
+Subject: Test email message
+This is a test message.
+EOT
+
+Rerun the mail command, this time as the other user, and verify that the message was sent and received:
+
+$ mail
+Heirloom Mail version 12.5 7/5/10. Type ? for help.
+"/var/spool/mail/demo": 1 message 1 new
+>N  1 root        Mon Mar 25 13:36  18/625   "Test email message"
+&
+
+Check the log file (/var/log/maillog) for errors if the message does not appear. Successful mail delivery will appear in the log file as follows:
+
+5. -> Sending Mail via an SMTP Relay Server
+
+Begin by editing the /etc/postfix/main.cf file and configure the myhostname parameter with your domain name: 
+
+myhostname = mydomain.com
+
+Next, create a new file in /etc/postfix named sasl_passwd and add a line containing the mail server host provided by the relay service 
+and the user name and password. For example:
+
+[smtp.myprovider.com]:587 neil@mydomain.com:mypassword
+
+Note that port 587 has also been specified in the above entry. Without this setting, postfix will default to using port 25, which is 
+blocked by default by most SMTP relay service providers. With the password file created, use the postmap utility to generate the hash
+database containing the mail credentials:
+
+# postmap /etc/postfix/sasl_passwd
+
+Before proceeding, take some additional steps to secure your postfix credentials:
+
+# chown root:root /etc/postfix/sasl_passwd /etc/postfix/sasl_passwd.db
+# chmod 0600 /etc/postfix/sasl_passwd /etc/postfix/sasl_passwd.db
+
+Edit the main.cf file once again and add an entry to specify the relay server: 
+
+relayhost = [smtp.myprovider.com]:587
+
+Remaining within the main.cf file, add the following lines to configure the authentication settings for the SMTP server:
+
+smtp_use_tls = yes
+smtp_sasl_auth_enable = yes
+smtp_sasl_password_maps = hash:/etc/postfix/sasl_passwd
+smtp_tls_CAfile = /etc/ssl/certs/ca-bundle.crt
+smtp_sasl_security_options = noanonymous
+smtp_sasl_tls_security_options = noanonymous
+
+Finally, restart the postfix service:
+
+# systemctl restart postfix
+
+Once the service has restarted, try sending and receiving mail using either the mail tool or your preferred mail client.

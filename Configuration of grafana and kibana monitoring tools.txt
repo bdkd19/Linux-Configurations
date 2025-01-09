@@ -1,0 +1,89 @@
+---------- Grafana and Kibana monitoring tools configuration----------
+
+To install Grafana from the RPM repository, complete the following steps:
+1. Import the GPG key:
+# wget -q -O gpg.key https://rpm.grafana.com/gpg.key
+# rpm --import gpg.key
+
+2. Create /etc/yum.repos.d/grafana.repo with the following content:
+
+[grafana]
+name=grafana
+baseurl=https://rpm.grafana.com
+repo_gpgcheck=1
+enabled=1
+gpgcheck=1
+gpgkey=https://rpm.grafana.com/gpg.key
+sslverify=1
+sslcacert=/etc/pki/tls/certs/ca-bundle.crt
+
+3. To install Grafana OSS, run the following command:
+
+# dnf install grafana
+
+4. Copy and paste the RPM package URL and the local RPM package information from the download page into the pattern shown below and 
+run the command.
+
+# yum install -y https://dl.grafana.com/enterprise/release/grafana-enterprise-11.3.0+security~01-1.x86_64.rpm
+
+5. Start the Grafana server with systemd
+Complete the following steps to start the Grafana server using systemd and verify that it is running.
+
+To start the service, run the following commands:
+
+# systemctl daemon-reload
+# systemctl start grafana-server
+
+6.To verify that the service is running, run the following command:
+# systemctl status grafana-server
+
+7. Configure the Grafana server to start at boot using systemd
+To configure the Grafana server to start at boot, run the following command:
+
+# systemctl enable grafana-server.service
+
+8. Add port on firewall
+# firewall-cmd --add-port=3000/tcp --permanent 
+#firewall-cmd --reload 
+
+9. Then goto browser and type 
+http://ip_address:3000
+
+---------------------- Kibana Configuration ----------------
+Q)- What is kibana?
+- Kibana is an open source browser based visualization tool mainly used to analyse large volume of logs in the form of line graph, 
+  bar graph, pie charts , heat maps, region maps, coordinate maps, gauge, goals, timelion etc.
+- The visualization makes it easy to predict or to see the changes in trends of errors or other significant events of the input source.
+- Kibana works in sync with Elasticsearch and Logstash which together forms the so called ELK stack.
+
+Q)- What is ELK Stack?
+- ELK stands for Elasticsearch, Logstash, and Kibana. ELK is one of the popular log management platform used worldwide for log analysis.
+  In the ELK stack, Logstash extracts the logging data or other events from different input sources. It processes the events and later 
+  stores them in Elasticsearch.
+
+- Kibana is a visualization tool, which accesses the logs from Elasticsearch and is able to display to the user in the form of line graph, 
+bar graph, pie charts etc.
+
+- Logstash is responsible to collect the data from all the remote sources where the logs are filed and pushes the same to Elasticsearch.
+- Elasticsearch acts as a database where the data is collected and Kibana uses the data from Elasticsearch to represent the data to the 
+  user in the form of bargraphs, pie charts, heat maps
+  
+- Advantages of Kibana
+
+1. Contains open source browser based visualization tool mainly used to analyse large volume of logs in the form of line graph, 
+bar graph, pie charts, heat maps etc.
+
+2. Simple and easy for beginners to understand.
+
+3. Ease of conversion of visualization and dashboard into reports.
+
+4. Canvas visualization help to analyse complex data in an easy way.
+
+5. Timelion visualization in Kibana helps to compare data backwards to understand the performance better.
+
+- Disadvantages of Kibana
+
+1. Adding of plugins to Kibana can be very tedious if there is version mismatch.
+
+2. You tend to face issues when you want to upgrade from older version to a new one.
+

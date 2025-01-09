@@ -1,0 +1,135 @@
+============ How to install and configure Prometheus on Linux =================
+Prometheus is an open-source monitoring tool designed to provide monitoring and alerting functionality for cloud-native environments, 
+including Kubernetes. It can collect and store metrics as time-series data, recording information with a timestamp. 
+It can also collect and record labels, which are optional key-value pairs.
+	
+Login to Terminal as root, with the below-mentioned command, and then follow the steps to install Prometheus.
+
+sudo su -
+#1: Update and install the required dependencies
+Step 1: Update the Linux packages:
+
+yum update -y
+
+Step 2: Install Dependency:
+
+yum install wget -y
+#2: Download the Prometheus package
+Step 1: Download the Prometheus package
+
+Go to the official Prometheus downloads page, and copy the URL of the Linux “tar” file.
+
+Run the following command to download the package. Paste the copied URL after wget in the below command:
+
+wget https://github.com/prometheus/prometheus/releases/download/v2.42.0/prometheus-2.42.0.linux-amd64.tar.gz
+#3: Create Prometheus User and modify the permission
+
+Step 1: Add a Prometheus user with no login.
+
+useradd --no-create-home --shell /bin/false prometheus
+
+Step 2: Create Prometheus directories in “/etc” and “/var/lib” locations.
+
+mkdir /etc/prometheus /var/lib/prometheus
+Step 3: Change the ownership of the above directories to the Prometheus user we have created in the first step.
+
+chown prometheus:prometheus /etc/prometheus
+chown prometheus:prometheus /var/lib/prometheus
+
+Step 4: Now go to Prometheus downloaded location and extract it.	
+
+tar -xvzf prometheus-2.42.0.linux-amd64.tar.gz
+
+Step 5: Change the Prometheus Extracted directory name to Prometheus.
+
+mv prometheus-2.42.0.linux-amd64 prometheus
+
+Step 6: Copy the “prometheus” and “promtool” binary from the “prometheus” folder to “/usr/local/bin” location.
+
+cp prometheus/prometheus /usr/local/bin/
+cp prometheus/promtool /usr/local/bin/
+Step 7: Change the ownership to Prometheus user for the copied binary files.
+
+chown prometheus:prometheus /usr/local/bin/prometheus
+chown prometheus:prometheus /usr/local/bin/promtool
+
+Step 8: Copy the “consoles” and “console_libraries” directories from the “prometheus” to the “/etc/prometheus folder”
+
+cp -r prometheus/consoles /etc/prometheus
+
+cp -r prometheus/console_libraries /etc/prometheus
+
+Step 9: Change the ownership to Prometheus user
+
+chown -R prometheus:prometheus /etc/prometheus/consoles
+chown -R prometheus:prometheus /etc/prometheus/console_libraries
+
+#4: Add and modify Prometheus configuration file.
+Step 1: Create the prometheus.yml file under the “/etc/prometheus” location.
+vi /etc/prometheus/prometheus.yml
+
+Step 2: Add the following configuration to the file.
+global:
+  scrape_interval: 10s
+
+scrape_configs:
+  - job_name: 'prometheus_master'
+    scrape_interval: 5s
+    static_configs:
+      - targets: ['localhost:9090']
+then, save & exit the file
+
+Step 3: Change the ownership of the file.
+
+chown prometheus:prometheus /etc/prometheus/prometheus.yml
+
+#5: Configure Prometheus Systemd service
+Step 1: Create a systemd service file for Prometheus to run as System Startup.
+
+vi /etc/systemd/system/prometheus.service
+
+Step 2: Add the following content to the file:
+
+[Unit]
+Description=Prometheus
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+User=prometheus
+Group=prometheus
+Type=simple
+ExecStart=/usr/local/bin/prometheus \
+--config.file /etc/prometheus/prometheus.yml \
+--storage.tsdb.path /var/lib/prometheus/ \
+--web.console.templates=/etc/prometheus/consoles \
+--web.console.libraries=/etc/prometheus/console_libraries
+
+[Install]
+WantedBy=multi-user.target
+
+then, save & exit the file
+
+Step 3: Restart the daemon services to load the Prometheus service.
+
+# systemctl daemon-reload
+
+Start 4: Start and enable the Prometheus service to automatically run after reboot:
+
+# systemctl enable --now prometheus
+
+Step 5: To check if the Prometheus service is running, run the following command:
+
+# systemctl status prometheus
+
+#6: Access Prometheus Web Interface
+To access the Prometheus go to the browser and use the server IP on port 9090.
+
+http://server_IP:9090 OR http://localhost:9090
+
+Finally, We have successfully performed all steps to install Prometheus on Linux.
+
+
+
+
+
