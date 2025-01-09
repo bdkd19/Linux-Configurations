@@ -40,11 +40,6 @@ To compile Nagios Core, navigate to the extracted directory using the following 
 
 # cd nagios-4.4.10 
 
-Step 4: Compile Nagios Core
-To compile Nagios Core, navigate to the extracted directory using the following command:
-
-# cd nagios-4.4.10 
-
 Next, run the following command to compile Nagios Core:
 
 # ./configure --with-command-group=nagios 
