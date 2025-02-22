@@ -1,3 +1,5 @@
+URL to follow nagios installation:-  https://www.tecmint.com/install-nagios-in-linux/
+
 =====================Nagios Configuration=====================
 Nagios is an open-source monitoring software that allows system administrators to monitor the health and performance of servers, 
 applications, and network devices. Nagios provides a comprehensive solution for monitoring the IT infrastructure and can alert 
