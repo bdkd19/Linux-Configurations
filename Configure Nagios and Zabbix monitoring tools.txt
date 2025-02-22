@@ -110,4 +110,111 @@ Step 10: Access the Nagios Web Interface
 Finally, you can access the Nagios web interface by navigating to http://your-server-ip-hostname/nagios in your web browser. 
 You will be prompted to enter the username and password you created in step 8.
 
+------------------------ Now add client on nagios server -----------------------------------
+
+Q- Add ubuntu based client in nagios 
+
+1. install the NRPE package and the Nagios plugins:
+
+$ sudo apt install nagios-nrpe-server nagios-plugins-basic -y
+
+2. Configure NRPE: The NRPE configuration file is located at /etc/nagios/nrpe.cfg. You need to edit this file to allow your Nagios server to connect to the client.
+
+Open the nrpe.cfg file:
+
+$sudo vi /etc/nagios/nrpe.cfg
+
+Find the line that starts with allowed_hosts and add your Nagios server’s IP address. For example:
+
+allowed_hosts=127.0.0.1,192.168.1.100
+Replace 192.168.1.100 with the IP address of your Nagios server.
+
+3. Start and enable the NRPE service: After editing the configuration, restart the NRPE service to apply the changes:
+
+$ sudo systemctl restart nagios-nrpe-server
+$ sudo systemctl enable nagios-nrpe-server
+
+4. Allow NRPE through the firewall (if needed): If you are running a firewall on the Ubuntu machine, you need to allow the NRPE port (default 5666):
+
+$ sudo ufw allow 5666/tcp
+$ sudo ufw reload
+
+2. Configure Nagios Server to Monitor the Ubuntu Client
+Now that the NRPE client is installed and running on the Ubuntu machine, you need to configure the Nagios server to monitor it.
+
+Add a new host definition to the Nagios configuration. On the Nagios server, navigate to the directory where your Nagios configuration files are stored (typically /usr/local/nagios/etc/objects/ or /etc/nagios/).
+
+- Create a new host configuration file for the Ubuntu client. For example, create a file named ubuntu_client.cfg and add the following configuration:
+
+define host {
+    use                     linux-server
+    host_name               ubuntu-client
+    alias                   Ubuntu Client
+    address                 192.168.1.200  # IP address of the Ubuntu client
+    check_command           check-host-alive
+    max_check_attempts      3
+    notification_interval   30
+    notification_period     24x7
+}
+
+- Define services for monitoring. Add a service definition for NRPE to check the status. In the same file (ubuntu_client.cfg), add services to check common system metrics (like CPU, memory, disk, etc.):
+
+define service {
+    use                     generic-service
+    host_name               ubuntu-client
+    service_description     CPU Load
+    check_command           check_nrpe!check_cpu
+}
+
+define service {
+    use                     generic-service
+    host_name               ubuntu-client
+    service_description     Memory Usage
+    check_command           check_nrpe!check_mem
+}
+
+define service {
+    use                     generic-service
+    host_name               ubuntu-client
+    service_description     Disk Usage
+    check_command           check_nrpe!check_disk
+}
+
+- Update the Nagios configuration to include the new file. Make sure Nagios knows about the new configuration by editing the main configuration file (/usr/local/nagios/etc/nagios.cfg or /etc/nagios/nagios.cfg) to include the new host file. For example:
+
+$ cfg_file=/usr/local/nagios/etc/objects/ubuntu_client.cfg
+
+Restart Nagios: Finally, restart the Nagios service to apply the new configuration:
+
+$ sudo systemctl restart nagios
+
+3. Test the Monitoring
+On the Nagios web interface, navigate to the status of your newly added Ubuntu client (ubuntu-client), and check if the services (CPU, memory, disk, etc.) are being monitored correctly.
+If you see any issues or errors, review the Nagios and NRPE logs to troubleshoot.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
