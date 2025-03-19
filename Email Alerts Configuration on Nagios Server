@@ -1,0 +1,169 @@
+Part 1: Manual email send:
+
+All the below changes will be done in Nagios server, not on the client machine:
+
+Step 1: Edit below code in contact file : vi /usr/local/nagios/etc/objects/contacts.cfg
+
+define contact 
+
+    {
+
+            contact_name                                         nagiosadmin             ; Short name of user
+
+            alias                                                        Nagios Admin            ; Full name of user
+
+            email                                                       example@xyz.com 
+
+            service_notification_commands             notify-service-by-email
+
+            host_notification_commands                  notify-host-by-email
+
+            service_notification_options                   w,u,c,r,f,s
+
+            host_notification_options                        d,u,r,f,s
+
+            service_notification_period                     24x7
+
+            host_notification_period                          24x7
+
+    }
+
+Step 2: mailx Configuration 
+
+            Install mailx: yum install mailx -y
+
+            Configure SMTP: vim /etc/mail.rc
+
+Put below lines in mail rc file:
+
+            set smtp=smtps://smtp.gmail.com:465
+
+            set smtp-auth=login
+
+            set smtp-auth-user=example@xyz.com
+
+            set smtp-auth-password=secret_token_of_your_mail_server
+
+            set ssl-verify=ignore
+
+            set nss-config-dir=/etc/pki/nssdb/
+
+Test the mail is sending or not :
+
+            echo "hi, folks" | mail -v -s "hello" example@xyz.com
+
+ Step 3: change the below code in the commands.cfg file
+
+            vi /usr/local/nagios/etc/objects/commands.cfg
+
+define command 
+
+    {
+
+            command_name    notify-host-by-email
+
+command_line    /usr/bin/printf "%b" "***** Nagios *****\n\nNotification Type: $NOTIFICATIONTYPE$\nHost: $HOSTNAME$\nState: $HOSTSTATE$\nAddress: $HOSTADDRESS$\nInfo: $HOSTOUTPUT$\n\nDate/Time: $LONGDATETIME$\n" | /usr/bin/mailx -s "** $NOTIFICATIONTYPE$ Host Alert: $HOSTNAME$ is $HOSTSTATE$ **" $CONTACTEMAIL$
+
+    }
+
+define command 
+
+    {
+
+            command_name    notify-service-by-email
+
+command_line    /usr/bin/printf "%b" "***** Nagios *****\n\nNotification Type: $NOTIFICATIONTYPE$\n\nService: $SERVICEDESC$\nHost: $HOSTALIAS$\nAddress: $HOSTADDRESS$\nState: $SERVICESTATE$\n\nDate/Time: $LONGDATETIME$\n\nAdditional Info:\n\n$SERVICEOUTPUT$\n" | /usr/bin/mailx -s "** $NOTIFICATIONTYPE$ Service Alert: $HOSTALIAS$/$SERVICEDESC$ is $SERVICESTATE$ **" $CONTACTEMAIL$
+
+    }
+
+compare if any error is there :
+
+        /usr/local/nagios/bin/nagios -v /usr/local/nagios/etc/nagios.cfg
+
+
+        systemctl restart nagios
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Part 2: Automatic email alerting:
+
+Step 1: Install the below-mentioned dependencies on nagios server machine
+
+            yum install mailx -y
+
+            yum install sendmail -y
+
+            yum install sendmail* -y
+
+Step 2: Edit vi /etc/hosts and mention below the code
+
+            127.0.1.1 localhost.localdomain localhost
+
+Step 3:  Edit vi /usr/local/nagios/etc/objects/contacts.cfg and mention below mentioned code
+
+define contact
+
+     {
+
+            contact_name                                                 nagiosadmin            
+
+            use                                                                  generic-contact        
+
+            alias                                                                Nagios Admin         
+
+            email                                                               youremail@gmail.com 
+
+            service_notification_period                             24x7
+
+            service_notification_options                           w,u,c,r,f,s
+
+            service_notification_commands                     notify-service-by-email
+
+            host_notification_period                                 24x7
+
+            host_notification_options                               d,u,r,f,s
+
+            host_notification_commands                         notify-host-by-email
+
+    }
+
+Step 4:  vi commands.cfg
+
+            locate "notify-service-by-email" & "notify-host-by-email"
+
+replace existing portion in command by /usr/bin/mailx  (as mentioned above section)
+
+but make sure mailx available in /usr/bin/ otherwise move/install mailx on this location or change location in command.cfg
+
+Step 5: Edit vi /usr/local/nagios/etc/objects/client.cfg and mention below code in host section and service section respectivally.
+
+In each host add the following line as explained in the video
+
+            notifications_enabled                1
+
+            notification_period                     24x7
+
+            notification_options                   d,u,r,f,s
+
+            notification_interval                   120
+
+            contact_groups                         admins
+
+            contacts                                    nagiosadmin
+
+In each service add the following line as explained in the video
+
+            notifications_enabled               1
+
+            notification_period                    24x7
+
+            notification_options                  w,u,c,r,f,s
+
+            notification_interval                  60
+
+At last restart the Nagios service by the following command:
+
+            service nagios restart
+
+
+
