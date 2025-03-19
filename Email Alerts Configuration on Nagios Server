@@ -171,4 +171,33 @@ At last restart the Nagios service by the following command:
 
 my gmail app password : gdwj xnoc yjtd zgsm
 
+---------------------------------------------------------------------------------------------------- OR -----------------------------------------------------------------------------------------------------
+
+Cyrus SASL (Simple Authentication and Security Layer) is a framework that provides authentication and encryption services in various applications. 
+In the context of email, Cyrus SASL can be used to enable secure authentication for SMTP (Simple Mail Transfer Protocol) servers.
+
+yum install postfix -y
+yum install cyrus-sasl cyrus-sasl-lib cyrus-sasl-plain
+mkdir -p /etc/postfix/sasl/
+vi /etc/postfix/sasl/sasl_passwd
+[smtp.gmail.com]:587 username@gmail.com:applicationpassword
+postmap /etc/postfix/sasl/sasl_passwd
+chown root:root /etc/postfix/sasl/sasl_passwd /etc/postfix/sasl/sasl_passwd.db
+sudo chown 0600 /etc/postfix/sasl/sasl_passwd /etc/postfix/sasl/sasl_passwd.db
+vi /etc/postfix/main.cf
+postconf -e relayhost=[smtp.gmail.com]:587
+postconf -e smtp_sasl_auth_enable=yes
+postconf -e smtp_sasl_security_options=noanonymous
+postconf -e smtp_sasl_password_maps=hash:/etc/postfix/sasl/sasl_passwd
+postconf -e smtp_tls_security_level=encrypt
+postconf -e smtp_tls_security_level=verify
+postconf -e smtp_tls_CAfile=/etc/ssl/certs/ca-bundle.crt
+
+vi /etc/aliases
+root: username@gmail.com
+
+systemctl enable postfix
+systemctl restart postfix
+dnf install s-nail -y
+echo "Test" |/usr/bin/s-nail -vvv -s "Test Subject" username@gmail.com
 
