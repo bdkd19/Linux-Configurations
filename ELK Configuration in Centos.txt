@@ -1,0 +1,185 @@
+-------------------------------------- ELK Configuration in Centos/RHEL Based ---------------------------------
+
+Step 1: Prerequisites
+- A CentOS server (CentOS 7 or later).
+- Root or sudo access on the server.
+- A firewall open for the required ports:
+- Elasticsearch: 9200
+- Kibana: 5601
+- Logstash (if needed): 5044 (default beats input)
+
+Step 2: Update CentOS
+Before installing anything, let's make sure the server is up to date.
+# yum update -y
+
+Step 3: Install Java (Required for Elasticsearch and Logstash)
+Elasticsearch and Logstash both require Java to run. Install OpenJDK 11 (or the latest version):
+# yum install java-11-openjdk-devel -y
+
+Check the Java version to verify:
+# java -version
+
+Step 4: Install Elasticsearch
+1. Add Elasticsearch repository:
+
+Create a repository file for Elasticsearch:
+# vi /etc/yum.repos.d/elasticsearch.repo
+
+Add the following contents:
+
+[elasticsearch-7.x]
+name=Elasticsearch repository for 7.x packages
+baseurl=https://artifacts.elastic.co/packages/7.x/yum
+enabled=1
+gpgcheck=1
+gpgkey=https://artifacts.elastic.co/GPG-KEY-elasticsearch
+
+2. Install Elasticsearch:
+# yum install elasticsearch -y
+
+3. Configure Elasticsearch:
+
+Edit the Elasticsearch configuration file:
+# vi /etc/elasticsearch/elasticsearch.yml
+
+network.host: 0.0.0.0   # Allow connections from any IP
+http.port: 9200          # Default port for Elasticsearch HTTP interface
+
+4.Start and enable Elasticsearch:
+# systemctl enable elasticsearch
+# systemctl start elasticsearch
+ 
+5. Check if Elasticsearch is running:
+
+Run the following command to check the status:
+# curl -X GET "localhost:9200/"
+
+=> You should see a response like this:
+
+{
+  "name" : "node-1",
+  "cluster_name" : "elasticsearch",
+  "cluster_uuid" : "ABC123",
+  "version" : {
+    "number" : "7.x.x",
+    "build_flavor" : "default",
+    "build_type" : "tar",
+    "build_hash" : "abcdefg",
+    "build_date" : "2023-06-15T14:00:00.000Z",
+    "build_snapshot" : false,
+    "lucene_version" : "8.8.0",
+    "minimum_wire_compatibility_version" : "6.8.0",
+    "minimum_index_compatibility_version" : "6.0.0"
+  },
+  "tagline" : "You Know, for Search"
+}
+
+Step 5: Install Kibana
+Add Kibana repository:
+
+Create a repository file for Kibana:
+# vi /etc/yum.repos.d/kibana.repo
+
+Add the following content:
+
+[kibana-7.x]
+name=Kibana repository for 7.x packages
+baseurl=https://artifacts.elastic.co/packages/7.x/yum
+enabled=1
+gpgcheck=1
+gpgkey=https://artifacts.elastic.co/GPG-KEY-elasticsearch
+
+2. Install Kibana:
+ # yum install kibana -y
+ 
+3. Configure Kibana:
+Edit the Kibana configuration file:
+
+# vi /etc/kibana/kibana.yml
+
+Ensure the following settings:
+
+server.host: "0.0.0.0"        # Allow connections from any IP
+elasticsearch.hosts: ["http://localhost:9200"]  # Point Kibana to Elasticsearch
+	
+4. Start and enable Kibana:
+# systemctl enable kibana
+# systemctl start kibana
+
+5. Access Kibana:
+
+Now, you can access Kibana through a browser at http://<your_server_ip>:5601.
+Login to the Kibana dashboard, and you should be able to explore and visualize your data.
+
+
+Step 6: Install Logstash
+Install Logstash:
+
+Logstash is used to ingest, process, and forward logs or data to Elasticsearch. To install Logstash, first add the repository.
+# yum install logstash -y
+
+2. Configure Logstash:
+Create a simple configuration for Logstash to accept logs from Filebeat or other agents and send them to Elasticsearch.
+First, create a configuration file for Logstash:
+ 
+# vi /etc/logstash/conf.d/logstash.conf
+
+input {
+  file {
+    path => "/var/log/*.log"   # Adjust the path to your log files
+    start_position => "beginning"
+  }
+}
+
+filter {
+  # Add filter logic here (e.g., grok, date, etc.)
+}
+
+output {
+  elasticsearch {
+    hosts => ["http://localhost:9200"]
+    index => "logs-%{+YYYY.MM.dd}"
+  }
+}
+
+3. Start and enable Logstash:
+
+# systemctl enable logstash
+# systemctl start logstash
+
+4. Verify Logstash is working:
+
+Check the Logstash logs for errors:
+# journalctl -u logstash
+
+Step 7: Install Filebeat (Optional)
+If you want to ship logs to Logstash or Elasticsearch, Filebeat is commonly used. Here’s a quick install guide:
+
+1. Install Filebeat:
+
+# yum install filebeat -y
+
+2. Configure Filebeat:
+
+Edit the Filebeat configuration:
+
+# vi /etc/filebeat/filebeat.yml
+
+Update the output.elasticsearch section:
+
+output.elasticsearch:
+  hosts: ["localhost:9200"]
+
+3. Enable and start Filebeat:
+
+sudo systemctl enable filebeat
+sudo systemctl start filebeat
+
+Step 8: Verify and Access ELK Stack
+Now that everything is installed:
+
+Kibana: Access Kibana from the web browser (http://<your_server_ip>:5601) to view and manage logs.
+
+Elasticsearch: You can send queries to Elasticsearch (http://<your_server_ip>:9200).
+
+Logstash: Verify that Logstash is receiving logs (e.g., check Logstash logs or Kibana for new data).
