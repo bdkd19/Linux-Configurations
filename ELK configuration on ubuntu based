@@ -1,5 +1,7 @@
 -------------------------------- ELK Configuraiton on Ubuntu based --------------------------------------------
 
+-------------------------------- Set Up ELK Stack on VM1 ------------------------------------------------------
+
 Step 1: Prerequisites
 - An Ubuntu 22.04 server.
 - sudo privileges.
@@ -138,11 +140,15 @@ Check the Logstash logs for errors:
 Step 7: Install Filebeat (Optional)
 If you want to ship logs to Logstash or Elasticsearch, Filebeat is commonly used. Here’s a quick install guide:
 
-1. Install Filebeat:
+-----------------------------  Step 2: Install Apache and Filebeat on VM2 ------------------------------------------------------------------
+1. Install Apache
+# apt update && sudo apt install apache2 -y
+
+2. Install Filebeat:
 
 # apt install filebeat -y
 
-2. Configure Filebeat:
+3. Configure Filebeat to Send Logs to Logstash (on VM1)
 
 Edit the Filebeat configuration:
 
@@ -150,13 +156,14 @@ Edit the Filebeat configuration:
 
 Update the output.elasticsearch section:
 
-output.elasticsearch:
-  hosts: ["localhost:9200"]
+output.logstash:
+  hosts: ["<VM1-IP>:5044"]
 
 3. Enable and start Filebeat:
 
-sudo systemctl enable filebeat
-sudo systemctl start filebeat
+# filebeat modules enable apache
+# systemctl enable filebeat
+# systemctl start filebeat
 
 Step 8: Verify and Access ELK Stack
 Now that everything is installed:
