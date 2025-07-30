@@ -79,12 +79,14 @@ If it "hangs" — that’s normal (it’s now running and listening).
 
 Then try to run with 
 #nohup vsftpd /etc/vsftpd.conf &
-
+----------------------- Now how to access in other machine -------------
 12. Now all set try to connect with host 
 #ftp 172.17.0.2
 
 Username: sam
 Password: the one you set
+
+
 
 
 
