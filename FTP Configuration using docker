@@ -86,6 +86,7 @@ Then try to run with
 Username: sam
 Password: the one you set
 
+=> for download file use get <filename> or mget <filename>
 
 
 
