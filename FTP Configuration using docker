@@ -56,7 +56,8 @@ Uncomment the chroot to prevent the FTP-connected user from accessing any files 
 . . .
 chroot_local_user=YES
 . . .
-Next, add a user_sub_token directive whose value is the $USER environment variable. Then add a local_root directive and set it to the path shown, which also includes the $USER environment variable. This setup ensures that the configuration will allow for this user and future users to be routed to the appropriate user’s home directory when logging in. Add these settings anywhere in the file:
+Next, add a user_sub_token directive whose value is the $USER environment variable. Then add a local_root directive and set it to the path shown, which also includes the $USER environment variable. 
+This setup ensures that the configuration will allow for this user and future users to be routed to the appropriate user’s home directory when logging in. Add these settings anywhere in the file:
 
 user_sub_token=$USER
 local_root=/home/$USER/ftp
