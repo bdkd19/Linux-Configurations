@@ -1,0 +1,90 @@
+Ftp configuration on ubuntu docker machine
+
+1. First create a container with ubuntu machine if without docker then follow the step 3 onwards…
+#docker run -itd --name=ftp_server ubuntu
+2.Then execute the docker and come inside the container and setup the configuration of ftp server 
+#docker exec -it ftp_server bash
+
+3. After inside the container run these steps
+#apt update
+#apt install vsftpd
+#cp /etc/vsftpd.conf /etc/vsftpd.conf.orig
+
+Check the status of firewall 
+#ufw status
+In case of firewall is active the run these steps
+# ufw allow 20,21,990/tcp
+#ufw allow 40000:50000/tcp
+ufw status
+4. Now Preparing the User Directory
+#useradd -m sam 
+#mkdir /home/sam/ftp
+#chown nobody:nogroup /home/sam/ftp
+#chmod a-w /home/sam/ftp
+
+5. Now verify the permissions
+#ls -la /home/sam/ftp
+
+
+6. Next, create the directory for file uploads:
+#mkdir /home/sam/ftp/files
+
+7.Assign the ownership to the user
+#chown sam:sam /home/sam/ftp/files
+
+8. Finally, add a test.txt file to use for testing:
+#echo "vsftpd test file" | tee /home/sam/ftp/files/test.txt
+
+9. Configuring FTP Access
+# vi /etc/vsftpd.conf
+Once you’ve opened the file, confirm that the anonymous_enable directive is set to NO and the local_enable directive is set to YES:
+# Allow anonymous FTP? (Disabled by default).
+anonymous_enable=NO
+#
+# Uncomment this to allow local users to log in.
+local_enable=YES
+
+These settings prevent anonymous logins and permit local logins, respectively. Keep in mind that enabling local logins means that any normal user listed in the /etc/passwd file can be used to log in.
+
+Some FTP commands allow users to add, change, or remove files and directories on the filesystem. Enable these commands by uncommenting the write_enable setting. You can do this by removing the pound sign (#) preceding this directive:
+
+. . .
+write_enable=YES
+. . .
+
+Uncomment the chroot to prevent the FTP-connected user from accessing any files or commands outside the directory tree: 
+. . .
+chroot_local_user=YES
+. . .
+Next, add a user_sub_token directive whose value is the $USER environment variable. Then add a local_root directive and set it to the path shown, which also includes the $USER environment variable. This setup ensures that the configuration will allow for this user and future users to be routed to the appropriate user’s home directory when logging in. Add these settings anywhere in the file:
+
+user_sub_token=$USER
+local_root=/home/$USER/ftp
+
+pasv_min_port=40000
+pasv_max_port=50000
+
+userlist_enable=YES
+userlist_file=/etc/vsftpd.userlist
+userlist_deny=NO
+
+# echo "sam" | sudo tee -a /etc/vsftpd.userlist
+
+10. Check that it was added as you expected:
+# cat /etc/vsftpd.userlist
+
+11. Now start the vsftpd 
+#vsftpd /etc/vsftpd.conf
+If it "hangs" — that’s normal (it’s now running and listening).
+
+Then try to run with 
+#nohup vsftpd /etc/vsftpd.conf &
+
+12. Now all set try to connect with host 
+#ftp 172.17.0.2
+
+Username: sam
+Password: the one you set
+
+
+
