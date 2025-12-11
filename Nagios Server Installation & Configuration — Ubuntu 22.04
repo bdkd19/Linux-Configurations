@@ -61,7 +61,22 @@ sudo make install
 
 http://<your-server-ip>/nagios
 
+Login with:
 
+Username: nagiosadmin
+
+Password: (what you created)
+
+
+10. Adding a Host to Monitor (Example: Linux Server)
+
+Edit host config:
+vi /usr/local/nagios/etc/objects/hosts.cfg
+
+11. Check Nagios Configuration
+sudo nagios -v /usr/local/nagios/etc/nagios.cfg
+-- If no errors → restart:
+sudo systemctl restart nagios
 
 
 
