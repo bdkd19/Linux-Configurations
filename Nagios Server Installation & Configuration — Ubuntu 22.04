@@ -1,1 +1,82 @@
-Nagios Server Installation & Configuration — Ubuntu 22.04
+--------------------------------------------------------------Nagios Server Installation & Configuration — Ubuntu 22.04 ---------------------------------------------------------------------------
+
+1. Update System
+ # sudo apt update && sudo apt upgrade -y
+
+2. Install Required Packages
+  - Nagios requires development tools, Apache, PHP, and some libraries.
+# sudo apt install -y apache2 php php-gd libgd-dev gcc make unzip libapache2-mod-php autoconf wget build-essential libssl-dev daemon
+
+3. Create Nagios User & Group
+ # sudo useradd nagios
+# sudo groupadd nagcmd
+# sudo usermod -a -G nagcmd nagios
+# sudo usermod -a -G nagcmd www-data
+
+4. Download & Install Nagios Core
+(Replace version if a newer release is available.)
+# cd /tmp
+wget https://github.com/NagiosEnterprises/nagioscore/releases/download/nagios-4.4.14/nagios-4.4.14.tar.gz
+tar -xzf nagios-4.4.14.tar.gz
+cd nagios-4.4.14
+
+5. Compile & Install:
+# ./configure --with-command-group=nagcmd
+make all
+sudo make install
+sudo make install-daemoninit
+sudo make install-commandmode
+sudo make install-config
+sudo make install-webconf
+
+6. Create Nagios Web User
+This is the login for the Nagios dashboard.
+# sudo htpasswd -c /usr/local/nagios/etc/htpasswd.users nagiosadmin
+
+(Be sure to remember the password.)
+Enable Apache modules:
+
+# sudo a2enmod rewrite cgi
+# sudo systemctl restart apache2
+
+7. Install Nagios Plugins 
+ Nagios uses plugins to check services.
+# cd /tmp
+wget https://github.com/nagios-plugins/nagios-plugins/releases/download/release-2.4.6/nagios-plugins-2.4.6.tar.gz
+tar -xzf nagios-plugins-2.4.6.tar.gz
+cd nagios-plugins-2.4.6
+
+--- Compile & install:
+# ./configure --with-nagios-user=nagios --with-nagios-group=nagios
+make
+sudo make install
+
+8. Start & Enable Nagios
+
+# sudo systemctl enable nagios
+# sudo systemctl start nagios
+# sudo systemctl status nagios
+
+9. Access Nagios Web Interface
+
+http://<your-server-ip>/nagios
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
