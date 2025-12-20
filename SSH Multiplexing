@@ -1,0 +1,24 @@
+----------------------------------------------------------------- SSH multiplexing -----------------------------------------------------------
+meaning==> SSH multiplexing ka use multiple SSH connections ko reuse karne ke liye hota hai, taaki connection establishment ka time reduce ho sake aur efficiency badh sake.
+
+SSH multiplexing allows you to reuse an existing SSH connection for multiple sessions, instead of creating a new connection every time you SSH into a server. This makes subsequent connections faster.
+
+SSH multiplexing ka use un scenarios mein hota hai jahan tumhare paas multiple SSH connections ek hi remote server ya set of servers ke saath hote hain.
+
+Yeh connection setup time ko significantly reduce karta hai, especially jab tum same server par baar-baar connect kar rahe ho.
+
+It is ideal for automating tasks, cloud infrastructure management, DevOps tasks, and monitoring systems.
+
+==> practical
+
+goto your .ssh directory and create a file config
+and also create cm_socket directory where all the active sessions are store.
+eg: mkdir -p .ssh/cm_socket
+chmod 700 .ssh/cm_socket
+vi config and enter those details 
+Host server1
+  HostName 192.168.159.129   # Yeh remote server ka IP hai
+  User root                  # Tumhare username ko root set kar rahe ho
+  ControlMaster auto         # Multiplexing enable 
+  ControlPath ~/.ssh/cm_socket/%h-%p-%r  # Socket path
+  ControlPersist 10m         # Agar tum disconnect ho, toh 10 minutes tak connection open rahega
