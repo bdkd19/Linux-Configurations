@@ -1,1 +1,171 @@
 
+--------------------------------------------------------------------------------- ELK Configuration on Ubuntu based -------------------------------------------------------------------------------------------
+what is ELK and its functioning ?
+
+=> ELK is a stack of three tools used for log collection, search, and analysis.
+
+ELK = Elasticsearch + Logstash + Kibana
+
+How it works:
+
+Logstash – collects logs/events from different sources, parses and transforms them.
+
+Elasticsearch – stores the processed data and indexes it for fast search and analytics.
+
+Kibana – visualizes the data (dashboards, charts, queries).
+
+Flow:
+Data sources → Logstash → Elasticsearch → Kibana
+
+Used mainly for monitoring, troubleshooting, and log analytics.
+
+Architecture
+
+Server1 (ELK Server) → Elasticsearch + Logstash + Kibana
+
+Server2 (Apache Server) → Apache + Filebeat
+
+Filebeat sends Apache logs → Logstash → Elasticsearch → Kibana
+------------------------------------------------------------------------------ Server 1 -----------------------------------------------------------------------------
+Server1: Install ELK (Elasticsearch + Logstash + Kibana)
+1. Install Elasticsearch
+sudo apt update
+sudo apt install elasticsearch -y
+
+
+Edit config:
+
+sudo nano /etc/elasticsearch/elasticsearch.yml
+
+Set:
+
+network.host: 0.0.0.0
+http.port: 9200
+
+Start:
+
+sudo systemctl enable --now elasticsearch
+
+2. Install Logstash
+sudo apt install logstash -y
+
+
+Create pipeline:
+
+sudo nano /etc/logstash/conf.d/apache.conf
+
+input {
+  beats {
+    port => 5044
+  }
+}
+
+filter {
+  if [fileset][module] == "apache" {
+    if [fileset][name] == "access" {
+      grok {
+        match => { "message" => "%{COMBINEDAPACHELOG}" }
+      }
+    }
+  }
+}
+
+output {
+  elasticsearch {
+    hosts => ["http://localhost:9200"]
+    index => "apache-logs-%{+YYYY.MM.dd}"
+  }
+}
+
+
+Start Logstash:
+
+sudo systemctl enable --now logstash
+
+3. Install Kibana
+sudo apt install kibana -y
+
+Edit:
+
+sudo nano /etc/kibana/kibana.yml
+
+server.host: "0.0.0.0"
+elasticsearch.hosts: ["http://localhost:9200"]
+
+
+Start:
+
+sudo systemctl enable --now kibana
+
+
+Access Kibana:
+
+http://SERVER1_IP:5601
+
+---------------------------------------------------------------- Server 2 -----------------------------------------------------------------------
+Server2: Install Apache + Filebeat
+1. Install Apache
+sudo apt install apache2 -y
+
+2. Install Filebeat
+sudo apt install filebeat -y
+
+
+Enable Apache module:
+
+sudo filebeat modules enable apache
+
+
+Edit Filebeat config:
+
+sudo nano /etc/filebeat/filebeat.yml
+
+
+Disable Elasticsearch output:
+
+#output.elasticsearch:
+
+
+Enable Logstash output:
+
+output.logstash:
+  hosts: ["SERVER1_IP:5044"]
+
+
+Setup and start:
+
+sudo filebeat setup
+sudo systemctl enable --now filebeat
+
+Verify
+
+Generate Apache traffic on Server2
+
+Check Filebeat:
+
+sudo systemctl status filebeat
+
+
+In Kibana:
+
+Go to Discover
+
+Create index pattern: apache-logs-*
+
+✅ You should now see Apache logs from Server2 in ELK on Server1.
+
+------------------------------------------------------------ In Last Browser ------------------------------------------------------------
+
+In Kibana: Refresh index list
+
+Go to Stack Management → Data Views → Create data view
+
+Enter Index pattern: apache-logs-*
+
+Click Refresh or Check for indices
+
+Choose @timestamp for the time field
+
+Click Create
+
+
