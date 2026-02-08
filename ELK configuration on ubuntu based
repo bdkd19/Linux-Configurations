@@ -1,177 +1,170 @@
--------------------------------- ELK Configuraiton on Ubuntu based --------------------------------------------
+--------------------------------------------------------------------------------- ELK Configuration on Ubuntu based -------------------------------------------------------------------------------------------
+what is ELK and its functioning ?
 
--------------------------------- Set Up ELK Stack on VM1 ------------------------------------------------------
+=> ELK is a stack of three tools used for log collection, search, and analysis.
 
-Step 1: Prerequisites
-- An Ubuntu 22.04 server.
-- sudo privileges.
-- Open firewall ports:
-- Elasticsearch: 9200
-- Kibana: 5601
-- Logstash (if used): 5044
+ELK = Elasticsearch + Logstash + Kibana
 
-Step 2: Update Ubuntu
-Update your system packages:
-# apt update && sudo apt upgrade -y
+How it works:
 
-Step 3: Install Java (Required for Elasticsearch and Logstash)
-Elasticsearch and Logstash require Java (OpenJDK 11+ is recommended):
-# apt install openjdk-11-jdk -y
+Logstash – collects logs/events from different sources, parses and transforms them.
 
-Check the Java version to verify:
-# java -version
+Elasticsearch – stores the processed data and indexes it for fast search and analytics.
 
-Step 4: Install Elasticsearch
-1. Add Elasticsearch repository:
+Kibana – visualizes the data (dashboards, charts, queries).
 
-# wget -qO - https://artifacts.elastic.co/GPG-KEY-elasticsearch | sudo apt-key add -
+Flow:
+Data sources → Logstash → Elasticsearch → Kibana
 
-Add the APT repository:
-# echo "deb https://artifacts.elastic.co/packages/7.x/apt stable main" | sudo tee /etc/apt/sources.list.d/elastic-7.x.list
+Used mainly for monitoring, troubleshooting, and log analytics.
 
-Update package list:
-# apt update
+Architecture
 
-2. Install Elasticsearch:
-# apt install elasticsearch -y
+Server1 (ELK Server) → Elasticsearch + Logstash + Kibana
 
-3. Configure Elasticsearch:
+Server2 (Apache Server) → Apache + Filebeat
 
-Edit the Elasticsearch configuration file:
-# vi /etc/elasticsearch/elasticsearch.yml
-
-network.host: 0.0.0.0   # Allow connections from any IP
-http.port: 9200          # Default port for Elasticsearch HTTP interface
-
-4.Start and enable Elasticsearch:
-# systemctl enable elasticsearch
-# systemctl start elasticsearch
- 
-5. Check if Elasticsearch is running:
-
-Run the following command to check the status:
-# curl -X GET "localhost:9200/"
-
-=> You should see a response like this:
-
-{
-  "name" : "node-1",
-  "cluster_name" : "elasticsearch",
-  "cluster_uuid" : "ABC123",
-  "version" : {
-    "number" : "7.x.x",
-    "build_flavor" : "default",
-    "build_type" : "tar",
-    "build_hash" : "abcdefg",
-    "build_date" : "2023-06-15T14:00:00.000Z",
-    "build_snapshot" : false,
-    "lucene_version" : "8.8.0",
-    "minimum_wire_compatibility_version" : "6.8.0",
-    "minimum_index_compatibility_version" : "6.0.0"
-  },
-  "tagline" : "You Know, for Search"
-}
-
-Step 5: Install Kibana
-
-1. Install Kibana:
- # apt install kibana -y
- 
-2. Configure Kibana:
-Edit the Kibana configuration file:
-
-# vi /etc/kibana/kibana.yml
-
-Ensure the following settings:
-
-server.host: "0.0.0.0"        # Allow connections from any IP
-elasticsearch.hosts: ["http://localhost:9200"]  # Point Kibana to Elasticsearch
-	
-3. Start and enable Kibana:
-# systemctl enable kibana
-# systemctl start kibana
-
-4. Access Kibana:
-
-Now, you can access Kibana through a browser at http://<your_server_ip>:5601.
-Login to the Kibana dashboard, and you should be able to explore and visualize your data.
+Filebeat sends Apache logs → Logstash → Elasticsearch → Kibana
+------------------------------------------------------------------------------ Server 1 -----------------------------------------------------------------------------
+Server1: Install ELK (Elasticsearch + Logstash + Kibana)
+1. Install Elasticsearch
+sudo apt update
+sudo apt install elasticsearch -y
 
 
-Step 6: Install Logstash
-1. Install Logstash:
+Edit config:
 
-Logstash is used to ingest, process, and forward logs or data to Elasticsearch. To install Logstash, first add the repository.
-# apt install logstash -y
+sudo nano /etc/elasticsearch/elasticsearch.yml
 
-2. Configure Logstash:
-Create a simple configuration for Logstash to accept logs from Filebeat or other agents and send them to Elasticsearch.
-First, create a configuration file for Logstash:
- 
-# vi /etc/logstash/conf.d/logstash.conf
+Set:
+
+network.host: 0.0.0.0
+http.port: 9200
+
+Start:
+
+sudo systemctl enable --now elasticsearch
+
+2. Install Logstash
+sudo apt install logstash -y
+
+
+Create pipeline:
+
+sudo nano /etc/logstash/conf.d/apache.conf
 
 input {
-  file {
-    path => "/var/log/*.log"   # Adjust the path to your log files
-    start_position => "beginning"
+  beats {
+    port => 5044
   }
 }
 
 filter {
-  # Add filter logic here (e.g., grok, date, etc.)
+  if [fileset][module] == "apache" {
+    if [fileset][name] == "access" {
+      grok {
+        match => { "message" => "%{COMBINEDAPACHELOG}" }
+      }
+    }
+  }
 }
 
 output {
   elasticsearch {
     hosts => ["http://localhost:9200"]
-    index => "logs-%{+YYYY.MM.dd}"
+    index => "apache-logs-%{+YYYY.MM.dd}"
   }
 }
 
-3. Start and enable Logstash:
 
-# systemctl enable logstash
-# systemctl start logstash
+Start Logstash:
 
-4. Verify Logstash is working:
+sudo systemctl enable --now logstash
 
-Check the Logstash logs for errors:
-# journalctl -u logstash
+3. Install Kibana
+sudo apt install kibana -y
 
-Step 7: Install Filebeat (Optional)
-If you want to ship logs to Logstash or Elasticsearch, Filebeat is commonly used. Here’s a quick install guide:
+Edit:
 
------------------------------  Step 2: Install Apache and Filebeat on VM2 ------------------------------------------------------------------
+sudo nano /etc/kibana/kibana.yml
+
+server.host: "0.0.0.0"
+elasticsearch.hosts: ["http://localhost:9200"]
+
+
+Start:
+
+sudo systemctl enable --now kibana
+
+
+Access Kibana:
+
+http://SERVER1_IP:5601
+
+---------------------------------------------------------------- Server 2 -----------------------------------------------------------------------
+Server2: Install Apache + Filebeat
 1. Install Apache
-# apt update && sudo apt install apache2 -y
+sudo apt install apache2 -y
 
-2. Install Filebeat:
+2. Install Filebeat
+sudo apt install filebeat -y
 
-# apt install filebeat -y
 
-3. Configure Filebeat to Send Logs to Logstash (on VM1)
+Enable Apache module:
 
-Edit the Filebeat configuration:
+sudo filebeat modules enable apache
 
-# vi /etc/filebeat/filebeat.yml
 
-Update the output.elasticsearch section:
+Edit Filebeat config:
+
+sudo nano /etc/filebeat/filebeat.yml
+
+
+Disable Elasticsearch output:
+
+#output.elasticsearch:
+
+
+Enable Logstash output:
 
 output.logstash:
-  hosts: ["<VM1-IP>:5044"]
+  hosts: ["SERVER1_IP:5044"]
 
-3. Enable and start Filebeat:
 
-# filebeat modules enable apache
-# systemctl enable filebeat
-# systemctl start filebeat
+Setup and start:
 
-Step 8: Verify and Access ELK Stack
-Now that everything is installed:
+sudo filebeat setup
+sudo systemctl enable --now filebeat
 
-Kibana: Access Kibana from the web browser (http://<your_server_ip>:5601) to view and manage logs.
+Verify
 
-Elasticsearch: You can send queries to Elasticsearch (http://<your_server_ip>:9200).
+Generate Apache traffic on Server2
 
-Logstash: Verify that Logstash is receiving logs (e.g., check Logstash logs or Kibana for new data).
+Check Filebeat:
+
+sudo systemctl status filebeat
+
+
+In Kibana:
+
+Go to Discover
+
+Create index pattern: apache-logs-*
+
+✅ You should now see Apache logs from Server2 in ELK on Server1.
+
+------------------------------------------------------------ In Last Browser ------------------------------------------------------------
+
+In Kibana: Refresh index list
+
+Go to Stack Management → Data Views → Create data view
+
+Enter Index pattern: apache-logs-*
+
+Click Refresh or Check for indices
+
+Choose @timestamp for the time field
+
+Click Create
 
 
