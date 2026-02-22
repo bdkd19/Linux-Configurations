@@ -1,0 +1,38 @@
+---------------------------------------------- nginx 2 node cluster with loadbalancer -------------------------------
+
+---------- server1  and server2-----
+
+1 Install nginx on Both server-1 and server-2
+
+------------ server-3 ----------
+1. Server-3 is act as a loadbalancer here
+2. install nginx 
+3. goto the file /etc/nginx/sites-available/default
+4. Comment all lines and in last copy this code
+upstream magic {                            => magic is a name of the group which contain server list and upstream is a group of backend servers
+        server 192.168.1.22;		    => Inside it, you list the real servers that will handle requests
+        server 192.168.1.21;
+}
+server {
+     listen 80;
+     server_name magic.local;              => here is your server name where you can access through browser
+
+     location / {
+     proxy_pass http://magic;              => proxy_pass is to call your servers list or we can say that Forward the request to the upstream group named magic
+     }}
+     :wq
+save it and restart nginx service
+
+5. Then copy the public ip of the loadbalancer server into you /etc/hosts file into your local machine like this 
+vi /etc/hosts
+52.66.243.188 magic.local
+
+6. Then try to browse magic.local on your browser
+
+Why this is useful?
+
+It allows:
+
+Load balancing (Nginx distributes traffic between both servers)
+
+High availability (if one fails, the other still works)
