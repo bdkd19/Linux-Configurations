@@ -1,0 +1,57 @@
+#!/bin/bash
+################### This script will add the servers one by one while run the script ################################
+## For host adding on hosts directory of nagios ##
+read -p "Enter the hostname which you want to add in nagios : " hostname
+read -p "Enter the server IP : " server_ip
+cat <<EOF > $hostname.cfg
+define host{
+        use                     mbrsl-servers
+        host_name               $hostname
+        alias                   $hostname
+        address                 $server_ip
+}
+EOF
+
+hosts="/usr/local/nagios/etc/objects/hosts"
+services="/usr/local/nagios/etc/objects/services"
+
+cp -rf $hostname.cfg $hosts
+
+echo -e "\nHost is added successfully\n"
+sleep 3
+## For this host now adding services of that particular host on services directory ##
+
+read -p " How many services you want to add : " S_num
+
+#Default services ###
+for i in cpu root load memory cron log
+do
+        cat <<EOF >> "${hostname}.cfg"
+        define service{
+         use                     mbrsl-service
+         host_name               $hostname
+         service_description     $i
+         check_command           check_nrpe!check_$i
+}
+EOF
+done
+
+for (( num=1; num<=$S_num; num++ ))
+        do
+        read -p "Enter your $num service : " service
+        cat <<EOF >> "${hostname}.cfg"
+        define service{
+           use                     mbrsl-service
+           host_name               $hostname
+           service_description     $service
+           check_command           check_nrpe!check_$service
+}
+EOF
+        done
+
+cp -rf $hostname.cfg $services
+sed -i '1,6d' $services/$hostname.cfg
+
+echo -e "\nServices is also added successfully\n"
+
+#/usr/local/nagios/bin/nagios -v /usr/local/nagios/etc/nagios.cfg
