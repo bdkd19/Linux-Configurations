@@ -1,0 +1,64 @@
+#!/bin/bash
+######### In this script it will add multiple hosts and services in one time on nagios without doing any manually work ###################################
+
+## For host adding on hosts directory of nagios ##
+read -p "How many servers you want to add in nagios : " servers_num
+
+hosts="/usr/local/nagios/etc/objects/hosts"
+services="/usr/local/nagios/etc/objects/services"
+declare -a host_list   #  declare array which name is host_list and which can store multiple hosts
+
+for (( num_servers=1; num_servers<=$servers_num; num_servers++  ))
+do
+        read -p "Enter the $num_servers hostname which you want to add in nagios : " hostname
+        read -p "Enter the server IP of $num_servers host : " server_ip
+        host_list+=("$hostname")
+        cat <<EOF > $hostname.cfg
+        define host{
+                use                     mbrsl-servers
+                host_name               $hostname
+                alias                   $hostname
+                address                 $server_ip
+        }
+EOF
+cp -rf $hostname.cfg $hosts
+done
+echo -e "\nHost is added successfully\n"
+sleep 3
+## For this host now adding services of that particular host on services directory ##
+
+read -p " How many services you want to add : " S_num
+
+for hostname in "${host_list[@]}"
+do
+#Default services ###
+for i in cpu root load memory cron log
+do
+        cat <<EOF >> "${hostname}.cfg"
+        define service{
+         use                     mbrsl-service
+         host_name               $hostname
+         service_description     $i
+         check_command           check_nrpe!check_$i
+}
+EOF
+done
+for (( num=1; num<=$S_num; num++ ))
+do
+        read -p "Enter your $num service : " service
+        cat <<EOF >> "${hostname}.cfg"
+        define service{
+           use                     mbrsl-service
+           host_name               $hostname
+           service_description     $service
+           check_command           check_nrpe!check_$service
+}
+EOF
+done
+
+cp -rf $hostname.cfg $services
+sed -i '1,6d' $services/$hostname.cfg
+done
+echo -e "\nServices is also added successfully\n"
+
+#/usr/local/nagios/bin/nagios -v /usr/local/nagios/etc/nagios.cfg
