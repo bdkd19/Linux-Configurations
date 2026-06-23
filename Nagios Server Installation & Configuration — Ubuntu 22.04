@@ -79,7 +79,10 @@ sudo nagios -v /usr/local/nagios/etc/nagios.cfg
 sudo systemctl restart nagios
 
 
+11. To change the nagios server password copy this command 
+# htpasswd /usr/local/nagios/etc/htpasswd.users nagiosadmin 
 
+Then enter your new password
 
 
 
