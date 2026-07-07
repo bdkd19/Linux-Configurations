@@ -1,0 +1,36 @@
+----------------------- Apache webserver configuration ---------------------------------
+1. install httpd or apache2 on you machine
+2. check its status with systemctl status httpd/apache2 if it is stopped then start it 
+3. for ssl certificate genertate ssl key 
+4. yum install epel-release
+5. yum install certbot python3-certbot-apache -y
+6. systemctl stop httpd.service 
+7. certbot certonly --standalone -d devlinux.xyz
+8. vim /etc/httpd/conf/httpd.conf
+ServerRoot "/etc/httpd"
+Listen 443
+
+Include conf.modules.d/*.conf
+DocumentRoot "/var/www/html"
+
+SSLEngine on
+SSLCertificateFile /etc/letsencrypt/live/devlinux.xyz/fullchain.pem
+SSLCertificateKeyFile /etc/letsencrypt/live/devlinux.xyz/privkey.pem
+
+ErrorDocument 404 /error_404.html
+
+DirectoryIndex index.html
+ErrorLog "logs/error_log"
+
+<IfModule mime_module>
+      TypesConfig /etc/mime.types
+</IfModule>
+
+
+
+
+----------------- certificate locations ---------------------------
+certificates 
+Certificate is saved at: /etc/letsencrypt/live/devlinux.xyz/fullchain.pem     <== pubic key
+Key is saved at:         /etc/letsencrypt/live/devlinux.xyz/privkey.pem       <== private key
+
