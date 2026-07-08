@@ -520,3 +520,122 @@ These three projects together form a strong portfolio for a **0–3 years DevOps
 * **Infrastructure automation** for web application stacks.
 * **End-to-end CI/CD automation** integrating GitHub, Jenkins, Docker, and Ansible. They also give you concrete examples to discuss during interviews, such as idempotency, inventory management, handlers, variables, and deployment strategies.
 
+-------------------------------------------------------------------------------------------------------------
+
+Yes. The easiest way is to use **`ansible-galaxy init`** to create the role structure.
+
+For **Project 1 (Multi-Server Configuration Management)**, follow these steps.
+
+### Step 1: Create the project directory
+
+```bash
+mkdir multi-server-config
+cd multi-server-config
+```
+
+### Step 2: Create the role
+
+```bash
+mkdir roles
+ansible-galaxy init roles/common
+```
+
+This creates:
+
+```text
+multi-server-config/
+├── roles/
+│   └── common/
+│       ├── defaults/
+│       ├── files/
+│       ├── handlers/
+│       ├── meta/
+│       ├── tasks/
+│       ├── templates/
+│       ├── tests/
+│       └── vars/
+```
+
+### Step 3: Create the remaining directories
+
+```bash
+mkdir inventory
+mkdir group_vars
+mkdir host_vars
+touch playbook.yml
+touch ansible.cfg
+touch inventory/hosts
+```
+
+Your project should now look like:
+
+```text
+multi-server-config/
+├── ansible.cfg
+├── inventory/
+│   └── hosts
+├── group_vars/
+├── host_vars/
+├── playbook.yml
+└── roles/
+    └── common/
+        ├── defaults/
+        ├── files/
+        ├── handlers/
+        │   └── main.yml
+        ├── meta/
+        ├── tasks/
+        │   └── main.yml
+        ├── templates/
+        ├── tests/
+        └── vars/
+            └── main.yml
+```
+
+### Step 4: Configure `ansible.cfg`
+
+```ini
+[defaults]
+inventory = inventory/hosts
+remote_user = ubuntu
+host_key_checking = False
+roles_path = roles
+```
+
+### Step 5: Start writing your role
+
+You'll mainly work in:
+
+* `roles/common/tasks/main.yml` → Tasks
+* `roles/common/handlers/main.yml` → Handlers
+* `roles/common/templates/` → Jinja2 templates
+* `roles/common/files/` → Static files
+* `roles/common/defaults/main.yml` → Default variables (preferred for reusable roles)
+* `roles/common/vars/main.yml` → Variables that should rarely be overridden
+
+---
+
+### A small improvement
+
+In production and in most DevOps teams, variables that users may want to override are usually kept in **`defaults/main.yml`** rather than `vars/main.yml`.
+
+For example, put this in `roles/common/defaults/main.yml`:
+
+```yaml
+users:
+  - devops
+  - developer
+
+packages:
+  - git
+  - curl
+  - vim
+  - unzip
+
+timezone: Asia/Kolkata
+```
+
+This follows Ansible best practices and is something interviewers appreciate.
+
+I can also guide you through building this project step by step, just as you would in a real company, explaining each task, role, and file as you go.
+
