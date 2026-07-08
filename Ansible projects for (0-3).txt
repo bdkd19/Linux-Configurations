@@ -635,7 +635,4 @@ packages:
 timezone: Asia/Kolkata
 ```
 
-This follows Ansible best practices and is something interviewers appreciate.
-
-I can also guide you through building this project step by step, just as you would in a real company, explaining each task, role, and file as you go.
 
