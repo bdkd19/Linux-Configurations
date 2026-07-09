@@ -259,3 +259,498 @@ Excellent idea for interview preparation. Here are **1–2 line interview answer
 
 These concise answers are suitable for **0–3 years Linux System Administrator interviews**, and are the level of detail interviewers typically expect in an initial round.
 
+--------------------------------------------------------------------------------------------------------------------------------------------------
+
+For a **0–3 years System Administrator interview**, you should be able to answer in **1–2 lines** and also explain the configuration files. Here are the most common questions.
+
+---
+
+# Apache Interview Questions (with 1–2 line answers)
+
+### 1. What is Apache?
+
+**Answer:**
+Apache is an open-source web server that serves web pages over HTTP and HTTPS. It is process/thread-based and supports many modules.
+
+---
+
+### 2. What is Apache used for?
+
+**Answer:**
+Apache hosts websites and web applications by serving static and dynamic content to users.
+
+---
+
+### 3. What is a Virtual Host?
+
+**Answer:**
+A Virtual Host allows multiple websites to run on the same Apache server using different domain names.
+
+---
+
+### 4. What is DocumentRoot?
+
+**Answer:**
+DocumentRoot is the directory from which Apache serves website files like HTML, CSS, and images.
+
+Example:
+
+```
+DocumentRoot /var/www/html
+```
+
+---
+
+### 5. How do you check Apache configuration?
+
+**Answer:**
+
+```bash
+apachectl configtest
+```
+
+or
+
+```bash
+httpd -t
+```
+
+---
+
+### 6. How do you restart Apache?
+
+**Answer:**
+
+```bash
+systemctl restart httpd
+```
+
+(Ubuntu: `systemctl restart apache2`)
+
+---
+
+### 7. Where are Apache logs?
+
+**Answer:**
+
+```
+/var/log/httpd/access_log
+/var/log/httpd/error_log
+```
+
+(Ubuntu: `/var/log/apache2/`)
+
+---
+
+### 8. Difference between Access Log and Error Log?
+
+**Answer:**
+Access Log records all client requests, while Error Log records server errors and warnings.
+
+---
+
+### 9. How do you enable SSL?
+
+**Answer:**
+Install the SSL module, configure the certificate in the Virtual Host, and listen on port 443.
+
+---
+
+### 10. What is mod_rewrite?
+
+**Answer:**
+`mod_rewrite` is an Apache module used for URL rewriting and redirects.
+
+---
+
+# Nginx Interview Questions (with 1–2 line answers)
+
+### 1. What is Nginx?
+
+**Answer:**
+Nginx is an open-source web server and reverse proxy that uses an event-driven architecture for high performance.
+
+---
+
+### 2. Why is Nginx faster than Apache?
+
+**Answer:**
+Nginx uses an event-driven model that handles thousands of concurrent connections with lower memory usage.
+
+---
+
+### 3. What is a Server Block?
+
+**Answer:**
+A Server Block is the Nginx equivalent of an Apache Virtual Host and hosts one or more websites.
+
+---
+
+### 4. What is Reverse Proxy?
+
+**Answer:**
+A reverse proxy receives client requests and forwards them to backend servers, hiding the backend from users.
+
+---
+
+### 5. What is Load Balancing?
+
+**Answer:**
+Load balancing distributes incoming traffic across multiple backend servers to improve performance and availability.
+
+---
+
+### 6. How do you test Nginx configuration?
+
+**Answer:**
+
+```bash
+nginx -t
+```
+
+---
+
+### 7. How do you reload Nginx?
+
+**Answer:**
+
+```bash
+systemctl reload nginx
+```
+
+---
+
+### 8. Where are Nginx logs?
+
+**Answer:**
+
+```
+/var/log/nginx/access.log
+/var/log/nginx/error.log
+```
+
+---
+
+### 9. What is `worker_processes`?
+
+**Answer:**
+It specifies the number of worker processes that handle client requests.
+
+---
+
+### 10. What is `proxy_pass`?
+
+**Answer:**
+`proxy_pass` forwards client requests to another server or application.
+
+Example:
+
+```nginx
+proxy_pass http://localhost:8080;
+```
+
+---
+
+# Apache Configuration File Explained
+
+Main configuration file:
+
+```
+/etc/httpd/conf/httpd.conf       (RHEL/CentOS)
+```
+
+or
+
+```
+/etc/apache2/apache2.conf        (Ubuntu)
+```
+
+Example:
+
+```apache
+Listen 80
+
+ServerName example.com
+
+DocumentRoot "/var/www/html"
+
+<Directory "/var/www/html">
+    AllowOverride All
+    Require all granted
+</Directory>
+
+ErrorLog logs/error_log
+
+CustomLog logs/access_log combined
+```
+
+### Explanation
+
+### Listen 80
+
+Apache listens for HTTP requests on port 80.
+
+---
+
+### ServerName
+
+```
+ServerName example.com
+```
+
+Defines the server's hostname.
+
+---
+
+### DocumentRoot
+
+```
+DocumentRoot /var/www/html
+```
+
+Specifies where website files are stored.
+
+---
+
+### Directory Block
+
+```apache
+<Directory "/var/www/html">
+```
+
+Applies permissions and settings to that directory.
+
+---
+
+### AllowOverride
+
+```
+AllowOverride All
+```
+
+Allows `.htaccess` files to override Apache settings.
+
+---
+
+### Require all granted
+
+```
+Require all granted
+```
+
+Allows everyone to access the website.
+
+---
+
+### ErrorLog
+
+```
+ErrorLog logs/error_log
+```
+
+Stores server error messages.
+
+---
+
+### CustomLog
+
+```
+CustomLog logs/access_log combined
+```
+
+Stores all client requests.
+
+---
+
+# Apache Virtual Host Configuration
+
+```apache
+<VirtualHost *:80>
+
+ServerName example.com
+
+DocumentRoot /var/www/example
+
+ErrorLog logs/example-error.log
+
+CustomLog logs/example-access.log combined
+
+</VirtualHost>
+```
+
+**Explanation:**
+
+* `VirtualHost *:80` → Listens on port 80.
+* `ServerName` → Domain name.
+* `DocumentRoot` → Website files location.
+* `ErrorLog` → Error log file.
+* `CustomLog` → Access log file.
+
+---
+
+# Nginx Configuration File Explained
+
+Main configuration file:
+
+```
+/etc/nginx/nginx.conf
+```
+
+Website configuration files:
+
+```
+/etc/nginx/conf.d/
+
+/etc/nginx/sites-available/
+```
+
+Example:
+
+```nginx
+worker_processes auto;
+
+events {
+    worker_connections 1024;
+}
+
+http {
+
+    include mime.types;
+
+    server {
+
+        listen 80;
+
+        server_name example.com;
+
+        root /usr/share/nginx/html;
+
+        index index.html index.php;
+
+        location / {
+            try_files $uri $uri/ =404;
+        }
+    }
+}
+```
+
+---
+
+### worker_processes
+
+```
+worker_processes auto;
+```
+
+Automatically creates worker processes based on the number of CPU cores.
+
+---
+
+### worker_connections
+
+```
+worker_connections 1024;
+```
+
+Specifies how many client connections each worker can handle.
+
+---
+
+### http
+
+```nginx
+http {
+}
+```
+
+Contains global HTTP configuration.
+
+---
+
+### server
+
+```nginx
+server {
+}
+```
+
+Equivalent to an Apache Virtual Host.
+
+---
+
+### listen
+
+```
+listen 80;
+```
+
+Listens on port 80.
+
+---
+
+### server_name
+
+```
+server_name example.com;
+```
+
+Specifies the domain name.
+
+---
+
+### root
+
+```
+root /usr/share/nginx/html;
+```
+
+Location of website files.
+
+---
+
+### index
+
+```
+index index.html index.php;
+```
+
+Default file served when a directory is requested.
+
+---
+
+### location
+
+```nginx
+location /
+```
+
+Defines how Nginx handles requests for a specific URL path.
+
+---
+
+### try_files
+
+```nginx
+try_files $uri $uri/ =404;
+```
+
+Checks whether the requested file or directory exists; if not, returns a 404 error.
+
+---
+
+# Apache vs Nginx (Very Common Interview Question)
+
+| Apache                                   | Nginx                                          |
+| ---------------------------------------- | ---------------------------------------------- |
+| Process/thread-based architecture        | Event-driven architecture                      |
+| Better support for `.htaccess`           | Does not support `.htaccess`                   |
+| Good for dynamic content                 | Excellent for static content and reverse proxy |
+| Uses Virtual Hosts                       | Uses Server Blocks                             |
+| More memory usage under high concurrency | Lower memory usage under high concurrency      |
+
+### Interview Answer (2 lines)
+
+> **Apache** is best known for its flexibility and extensive module support, especially for dynamic websites. **Nginx** is optimized for high concurrency, static content delivery, and reverse proxy/load balancing with an event-driven architecture.
+
+These are the level of answers typically expected in interviews for **0–3 years of System Administrator experience**.
+
