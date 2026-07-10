@@ -25,8 +25,80 @@ ErrorLog "logs/error_log"
 <IfModule mime_module>
       TypesConfig /etc/mime.types
 </IfModule>
+----------------------------------------- For hosting multiple website --------------------------------------
+vim /etc/httpd/conf/httpd.conf
+ServerRoot "/etc/httpd"
+Listen 443
+Listen 80
 
 
+Include conf.modules.d/*.conf
+IncludeOptional conf.d/*.conf
+
+<IfModule mime_module>
+      TypesConfig /etc/mime.types
+</IfModule>
+
+vim /etc/httpd/conf.d/devlinux.xyz.conf
+
+<VirtualHost *:443>
+DocumentRoot "/var/www/devlinux.xyz"
+
+SSLEngine on
+SSLCertificateFile /etc/letsencrypt/live/devlinux.xyz/fullchain.pem
+SSLCertificateKeyFile /etc/letsencrypt/live/devlinux.xyz/privkey.pem
+
+ErrorDocument 404 /error_404.html
+
+DirectoryIndex index.html
+ErrorLog "logs/error_log"
+</VirtualHost>
+
+====> For second website 
+vim /etc/httpd/conf.d/website2.conf
+
+<VirtualHost *:80>
+  ServerName website2.com
+  ServerAlias www.website2.com
+  DocumentRoot /var/www/website2/
+
+  ErrorLog /var/log/httpd/website2_error.log
+  CustomLog /var/log/httpd/website2_access.log combined
+
+</VirtualHost>
+
+------------------------- For apply loadbalancer on website 2 ------------------------------------
+vim /etc/httpd/conf.d/website2.conf
+<VirtualHost *:80>
+  ServerName website2.com
+  ServerAlias www.website2.com
+  DocumentRoot /var/www/website2/
+
+  <Proxy "balancer://mycluster">
+        BalancerMember http://13.234.21.220:80
+        BalancerMember http://13.235.67.39:80
+        ProxySet lbmethod=byrequests
+  </Proxy>
+
+  ProxyPass "/" "balancer://mycluster/"
+  ProxyPassReverse "/" "balancer://mycluster/"
+
+  ErrorLog /var/log/httpd/website2_error.log
+  CustomLog /var/log/httpd/website2_access.log combined
+</VirtualHost>
+
+
+
+------------------------------------------
+<VirtualHost *:80>
+  ServerName site1.com
+  ServerAlias www.site1.com
+  DocumentRoot /var/www/site1/public_html
+  
+  ErrorLog /var/log/httpd/site1_error.log
+  CustomLog /var/log/httpd.site1_access.log combined
+</VirtualHost>
+----------------------------------------------------
 
 
 ----------------- certificate locations ---------------------------
