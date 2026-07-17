@@ -106,3 +106,79 @@ certificates
 Certificate is saved at: /etc/letsencrypt/live/devlinux.xyz/fullchain.pem     <== pubic key
 Key is saved at:         /etc/letsencrypt/live/devlinux.xyz/privkey.pem       <== private key
 
+
+------------------------------------------------------ Nginx Web server configuration --------------------------------------------------
+1. yum install nginx -y 
+2. systemctl start nginx
+3. vim /etc/nginx/nginx.conf
+
+events{}
+
+http{
+        include mime.types;
+
+        server{
+                listen 80;
+                server_name devlinux.xyz;
+
+                root /usr/share/nginx/html/folio-tailwind-1.0.0;
+                index index.html;
+
+                error_page 404 error_404.html;
+
+                location / {
+                        try_files $uri $uri/ =404;     ==> $uri means first check the location of the page which user can try to find if not present then redirect the error page 
+                }
+
+                access_log /var/log/nginx/access.log;
+                error_log /var/log/nginx/error.log;
+        }
+}
+
+4. Now configure for https, for this ssl certificate are required 
+   # yum install epel-release -y    		==> no need for cloud based environment
+   # yum install certbot python3-certbot-nginx -y  ==> for ubuntu use apt 	
+
+5. First stop the nginx (if listening on port 80) as below command will use local port 80
+6. To generate certificates
+   certbort --standalone -d yourdomain.com
+7. Files will be generated in 
+   - /etc/letsencrypt/live/yourdomain.com/
+   eg: 
+   Successfully received certificate.
+Certificate is saved at: /etc/letsencrypt/live/devlinux.xyz/fullchain.pem
+Key is saved at:         /etc/letsencrypt/live/devlinux.xyz/privkey.pem
+
+8. After getting certificate goto again the conf file of nginx
+# vim /etc/nginx/nginx.conf
+events{}
+
+http{
+        include mime.types;
+
+        server{
+                listen 443 ssl http2;
+                server_name devlinux.xyz;
+
+                root /usr/share/nginx/html/folio-tailwind-1.0.0;
+                index index.html;
+
+                ssl_certificate /etc/letsencrypt/live/devlinux.xyz/fullchain.pem;
+                ssl_certificate_key /etc/letsencrypt/live/devlinux.xyz/privkey.pem;
+
+                ssl_protocols TLSv1.2 TLSv1.3;
+
+                error_page 404 error_404.html;
+
+                location / {
+                        try_files $uri $uri/ =404;
+
+                }
+                access_log /var/log/nginx/access.log;
+                error_log /var/log/nginx/access.log;
+        }
+
+}
+
+
+
