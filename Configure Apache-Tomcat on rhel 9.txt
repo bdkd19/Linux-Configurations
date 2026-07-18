@@ -1,4 +1,5 @@
 ============= Steps to Configure Apache/Tomcat in rhel-9 ==============
+H/W specs min => 4gb ram and 50gb hdd 
 
 Step-1: Installing Java on RHEL 9
 
@@ -33,7 +34,7 @@ The following is a description of each of the sub-directories in the installatio
  lib – stores library files.
  log – stores log files.
  temp – contains temporary files.
- webaaps – stores web application files.
+ webapps – stores web application files.
 
 Step 3: 1. Running Apache Tomcat Under Systemd in RHEL 9
 
