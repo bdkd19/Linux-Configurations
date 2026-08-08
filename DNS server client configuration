@@ -1,0 +1,114 @@
+1. First install the "bind" package into your machine
+  # install bind -y  
+
+2. Then goto the /etc/named.conf
+# vim /etc/named.conf
+options {
+        listen-on port 53 { <DNS-server-ip>; };  # only change in these lines and leave as it is
+	
+	allow-transfer { <DNS-slave ip>; };
+        dnssec-validation no;
+
+}
+
+zone "example.com" IN {                           # write your domain name in the place of example.com not fqdn
+        type master;
+        file "forward.zone";
+        allow-update { none; };
+};
+
+zone "159.168.192.in-addr.arpa" IN {
+        type master;
+        file "reverse.zone";
+        allow-update { none; };
+};
+
+==> these lines will be commented
+//logging {
+//        channel default_debug {
+//                file "data/named.run";
+//                severity dynamic;
+//        };
+//};
+
+//zone "." IN {
+//      type hint;
+//      file "named.ca";
+//};
+
+//include "/etc/named.rfc1912.zones";
+//include "/etc/named.root.key";
+	
+3. Now go to the /var/named directory
+# cp -p named.localhost forward.zone
+# cp -p named.loopback reverse.zone
+# vim forward.zone
+do this entries
+$TTL 1D
+@       IN SOA  DNS-server.example.com.         root.DNS-server.example.com. (
+                                                0       ; serial
+                                                1D      ; refresh
+                                                1H      ; retry
+                                                1W      ; expire
+                                                3H )    ; minimum
+                NS      DNS-server.example.com.
+DNS-server      A       192.168.159.143
+dnsmaster       CNAME   DNS-server
+
+#vim reverse.zone
+$TTL 1D
+@       IN SOA  DNS-server.example.com.         root.DNS-server.example.com. (
+                                                0       ; serial
+                                                1D      ; refresh
+                                                1H      ; retry
+                                                1W      ; expire
+                                                3H )    ; minimum
+        NS      DNS-server.example.com.
+143     PTR     DNS-server.example.com.
+146     PTR     DNS-slave.example.com.
+
+4. save the files and then goto the /etc/resolv.conf
+# vim /etc/resolv.conf
+ nameserver 192.168.159.143     => it should be dns server ip
+
+
+5. then save the files and then test it
+# dig DNS-server.example.com 		 =>  check dig with your hostname with fqdn
+
+
+after run this command make sure that 
+
+QUERY: 1, ANSWER: 1     => both the values should be 1 if not check the status of named service 
+
+6. Then come to the slave server
+	First install the "bind" package into your machine
+  	# install bind -y  
+
+7. Do same step-2 which you do in the master and only do changes in zone lines
+zone "example.com" IN {
+        type slave;
+        masters { 192.168.159.143; };
+        file "slaves/forward.zone";
+};
+
+zone "159.168.192.in-addr.arpa" IN {
+        type slave;
+        masters { 192.168.159.143; };
+        file "slaves/reverse.zone";
+};
+8. Then do changes in /etc/resolv.conf file 
+# vim /etc/resolv.conf
+nameserver 192.168.159.143  => master ip 
+nameserver 192.168.159.146  => slave ip
+
+9. and then save it and also allow dns service on firewall and test it with dig command 
+
+# firewall-cmd --permanent --add-service=dns
+# firewall-cmd --reload
+
+# dig DNS-slave.example.com
+and same you will get  QUERY: 1, ANSWER: 1  if not this will showing 1 then test the status of named with systemctl status named.service or with journalctl -xeu named
+
+
+
+
